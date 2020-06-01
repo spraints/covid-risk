@@ -1,5 +1,9 @@
 #!/bin/bash
 
+datadir="$(dirname "$0")/../data"
+mkdir -p $datadir
+cd $datadir
+
 curl -LO https://github.com/nytimes/covid-19-data/raw/master/us-states.csv
 curl -LO https://github.com/nytimes/covid-19-data/raw/master/us-counties.csv
 
