@@ -3,6 +3,7 @@ package covidsafe
 import (
 	"encoding/json"
 	"net/http"
+	"strconv"
 
 	"github.com/go-chi/chi"
 )
@@ -38,7 +39,9 @@ type CovidSafe struct {
 
 func (c *CovidSafe) Register(router chi.Router) {
 	router.Get("/places/summary", c.summary)
-	router.Get("/places/details", c.details)
+	router.Get("/places/details/{country}", c.getDetails)
+	router.Get("/places/details/{country}/{province}", c.getDetails)
+	router.Get("/places/details/{country}/{province}/{county}", c.getDetails)
 }
 
 type summary struct {
@@ -60,6 +63,8 @@ type county struct {
 }
 
 func (cs *CovidSafe) summary(w http.ResponseWriter, r *http.Request) {
+	// TODO memoize all this
+
 	var (
 		s summary
 		c *country
@@ -112,6 +117,106 @@ func (cs *CovidSafe) summary(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(&s)
 }
 
-func (c *CovidSafe) details(w http.ResponseWriter, r *http.Request) {
-	w.Write([]byte("TODO: for a given place: last 7 days case numbers, population"))
+type details struct {
+	Country    string `json:"country"`
+	Province   string `json:"province"`
+	County     string `json:"county"`
+	Last7      int    `json:"last7"`
+	Population int    `json:"population"`
+}
+
+const TBD = -1
+
+func (c *CovidSafe) getDetails(w http.ResponseWriter, r *http.Request) {
+	var d details
+	d.Country = chi.URLParam(r, "country")
+	d.Province = chi.URLParam(r, "province")
+	d.County = chi.URLParam(r, "county")
+
+	if d.Country == "US" {
+		if d.County != "" {
+			c.fillUSCountyDetails(&d)
+		} else if d.Province != "" {
+			c.fillUSStateDetails(&d)
+		} else {
+			c.fillUSDetails(&d)
+		}
+	} else {
+		if d.Province != "" {
+			c.fillProvinceDetails(&d)
+		} else {
+			c.fillCountryDetails(&d)
+		}
+	}
+
+	json.NewEncoder(w).Encode(&d)
+}
+
+func (c *CovidSafe) fillUSCountyDetails(d *details) {
+	var points []int
+	for _, row := range c.usCounties {
+		if row[1] == d.County && row[2] == d.Province {
+			points = append(points, atoi(row[4]))
+		}
+	}
+	d.Last7 = points[len(points)-1] - points[len(points)-8]
+	d.Population = TBD
+}
+
+func (c *CovidSafe) fillUSStateDetails(d *details) {
+	var points []int
+	for _, row := range c.usStates {
+		if row[1] == d.Province {
+			points = append(points, atoi(row[3]))
+		}
+	}
+	d.Last7 = points[len(points)-1] - points[len(points)-8]
+	d.Population = TBD
+}
+
+func (c *CovidSafe) fillUSDetails(d *details) {
+	var (
+		points []int
+		date   string
+		point  int
+	)
+	for _, row := range c.usStates {
+		if date != row[0] {
+			points = append(points, point)
+			date = row[0]
+			point = 0
+		}
+		point += atoi(row[3])
+	}
+	d.Last7 = point - points[len(points)-7]
+	d.Population = TBD
+}
+
+func (c *CovidSafe) fillProvinceDetails(d *details) {
+	for _, row := range c.global {
+		if d.Province == row[0] && d.Country == row[1] {
+			d.Last7 = atoi(row[len(row)-1]) - atoi(row[len(row)-8])
+			d.Population = TBD
+			return
+		}
+	}
+}
+
+func (c *CovidSafe) fillCountryDetails(d *details) {
+	last7 := 0
+	for _, row := range c.global {
+		if d.Country == row[1] {
+			last7 += atoi(row[len(row)-1]) - atoi(row[len(row)-8])
+		}
+	}
+	d.Last7 = last7
+	d.Population = TBD
+}
+
+func atoi(s string) int {
+	i, err := strconv.Atoi(s)
+	if err != nil {
+		panic(err)
+	}
+	return i
 }
