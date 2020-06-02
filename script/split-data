@@ -165,7 +165,7 @@ def read_csv(file, dir:, row_type:, out:, progress: 10000)
   print path
   print " "
   n = progress
-  CSV.foreach(path, headers: true, converters: %i[numeric date]) do |row|
+  CSV.foreach(path, headers: true, converters: %i[numeric date], encoding: "utf-8") do |row|
     n -= 1
     if n == 0
       print "."

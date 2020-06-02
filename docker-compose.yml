@@ -1,17 +1,10 @@
 version: '3.4'
 
 services:
-  covid-safe:
+  web:
     build:
       context: .
-    environment:
-      - "DATA_PATH=/live/data"
-      - "PUBLIC_PATH=/live/public"
-      - "TEMPLATES_PATH=/live/templates"
-      - "RELOAD_TEMPLATES=true"
     volumes:
-      - ./public:/live/public
-      - ./templates:/live/templates
-      - ./data:/live/data
+      - ./public:/usr/share/nginx/html
     ports:
-      - '8070:8080'
+      - '8070:80'

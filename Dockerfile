@@ -1,26 +1,18 @@
-FROM node:14.3.0 AS assets
-WORKDIR /src
-RUN mkdir /src/public && mkdir /src/public/assets
-# TBD
+FROM ruby:2.7.1 AS data
 
-FROM golang:1.14.3 AS data
+RUN apt-get update && apt-get install -y curl ruby
+
 WORKDIR /src
+
 COPY script/get-data script/get-data
 RUN script/get-data
 
-FROM golang:1.14.3
-WORKDIR /src
-COPY go.mod .
-COPY go.sum .
-RUN go mod download
-COPY cmd cmd
-COPY pkg pkg
-RUN go build -o /usr/bin/covid-safe ./cmd/covid-safe
-COPY --from=assets /src/public/assets /app/public/assets
-COPY --from=data   /src/data          /app/data
-COPY public    /app/public
-COPY templates /app/templates
-ENV LISTEN_ADDR=:8080
-ENV PUBLIC_PATH=/app/public
-ENV TEMPLATES_PATH=/app/templates
-ENTRYPOINT [ "/usr/bin/covid-safe" ]
+COPY script/split-data script/split-data
+RUN script/split-data
+
+FROM nginx:1.19
+
+WORKDIR /site
+#COPY conf.d /etc/nginx/conf.d
+COPY public /usr/share/nginx/html
+COPY --from=data /src/public/data /usr/share/nginx/html/data
