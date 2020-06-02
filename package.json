@@ -1,6 +1,13 @@
 {
   "private": true,
+  "scripts": {
+    "build-assets": "rollup -c rollup.config.js",
+    "tsc": "tsc"
+  },
   "devDependencies": {
-    "rollup": "^2.12.0"
+    "@rollup/plugin-typescript": "^4.1.2",
+    "rollup": "^2.12.0",
+    "tslib": "^2.0.0",
+    "typescript": "^3.9.3"
   }
 }
