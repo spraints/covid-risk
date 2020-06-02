@@ -1,0 +1,179 @@
+#!/usr/bin/env ruby
+
+require "csv"
+require "fileutils"
+require "json"
+
+def main
+  data_dir = File.expand_path("../data", File.dirname(__FILE__))
+  out_dir = File.expand_path("../public/data", File.dirname(__FILE__))
+  system "rm", "-rf", out_dir
+  system "mkdir", "-p", out_dir
+  out = Outputs.new(out_dir)
+  split_us(indir: data_dir, out: out)
+  split_world(indir: data_dir, out: out)
+  out.close
+end
+
+class Outputs
+  def initialize(dir)
+    @dir = dir
+    @countries = Hash.new { |h,k| h[k] = Locality.new(k) }
+  end
+
+  def update(country:, province: nil, county: nil, date:, cases:, deaths: nil)
+    @countries[country].update(date: date, cases: cases, deaths: deaths, children: [province, county])
+  end
+
+  def close
+    _write_locations
+    _write_cases
+  end
+
+  def _write_locations
+    _write_json ["locations"],
+      _localities(@countries, :countries, :provinces, :counties)
+  end
+
+  def _write_cases
+    @countries.each do |_, country|
+      _write_json ["cases", country.name],
+        name: country.name,
+        cases: _counts(country.cases_by_date)
+
+      country.children.each do |_, province|
+        _write_json ["cases", country.name, province.name],
+          name: "#{province.name}, #{country.name}",
+          cases: _counts(province.cases_by_date)
+
+        province.children.each do |_, county|
+          _write_json ["cases", country.name, province.name, county.name],
+            name: "#{county.name}, #{province.name}, #{country.name}",
+            cases: _counts(county.cases_by_date)
+        end
+      end
+    end
+  end
+
+  def _counts(cases_by_date)
+    cases_by_date.sort_by(&:first).map { |date, count| [date.to_s, count] }
+  end
+
+  def _localities(localities, key, *other_keys)
+    return {} if localities.nil? || localities.empty?
+    { key => localities.sort_by(&:first).map { |_, l| _locality(l, *other_keys) } }
+  end
+
+  def _locality(locality, *other_keys)
+    children = other_keys.empty? ? {} : _localities(locality.children, *other_keys)
+    { name: locality.name }.merge(children)
+  end
+
+  def _write_json(file, data)
+    path = File.join(@dir, *file) + ".json"
+    FileUtils.mkdir_p(File.dirname(path))
+    File.write(path, JSON.dump(data))
+  end
+end
+
+class Locality
+  def initialize(name)
+    @name = name
+    @children = Hash.new { |h,k| h[k] = Locality.new(k) }
+    @cases_by_date = Hash.new(0)
+    @deaths_by_date = Hash.new(0)
+  end
+
+  attr_reader :name, :children
+  attr_reader :cases_by_date, :deaths_by_date
+
+  def update(date:, cases:, deaths:, children:)
+    @cases_by_date[date] += cases
+    @deaths_by_date[date] += deaths if deaths
+    child, *rest = children
+    @children[child].update(date: date, cases: cases, deaths: deaths, children: rest) if child
+  end
+end
+
+def split_us(indir:, out:)
+  read_csv("us-counties.csv", dir: indir, row_type: USCountiesRow, out: out)
+end
+
+class USCountiesRow
+  def initialize(row)
+    @date = row["date"]
+    @county = row["county"]
+    @state = row["state"]
+    #@fips = row["fips"]
+    @cases = row["cases"]
+    @deaths = row["deaths"]
+  end
+
+  def update(out)
+    out.update \
+      date: @date,
+      country: "US",
+      province: @state,
+      county: @county,
+      cases: @cases,
+      deaths: @deaths
+  end
+end
+
+def split_world(indir:, out:)
+  read_csv("time_series_covid19_confirmed_global.csv", dir: indir, row_type: WorldRow, out: out, progress: 30)
+end
+
+class WorldRow
+  def initialize(row)
+    @row = row
+  end
+
+  def update(out)
+    country = @row["Country/Region"]
+    province = @row["Province/State"]
+    return if country == "US"
+    @row.headers[4..].each do |date|
+      out.update \
+        date: Dates.parse(date),
+        country: country,
+        province: province,
+        cases: @row[date]
+    end
+  end
+end
+
+class MemoDateParser
+  def initialize
+    @parsed = {}
+  end
+
+  def parse(str)
+    @parsed[str] ||= _parse(str)
+  end
+
+  def _parse(str)
+    m,d,y = str.split("/").map(&:to_i)
+    Date.new(2000 + y, m, d)
+  end
+end
+
+Dates = MemoDateParser.new
+
+def read_csv(file, dir:, row_type:, out:, progress: 10000)
+  path = File.join(dir, file)
+  print path
+  print " "
+  n = progress
+  CSV.foreach(path, headers: true, converters: %i[numeric date]) do |row|
+    n -= 1
+    if n == 0
+      print "."
+      n = progress
+    end
+    row_type.new(row).update(out)
+  end
+  print "\n"
+end
+
+main
