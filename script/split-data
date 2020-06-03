@@ -4,28 +4,33 @@ require "csv"
 require "fileutils"
 require "json"
 
+WHOLE_COUNTRY = "(whole country)"
+USA = "United States"
+
 def main
   data_dir = File.expand_path("../data", File.dirname(__FILE__))
   out_dir = File.expand_path("../public/data", File.dirname(__FILE__))
   system "rm", "-rf", out_dir
   system "mkdir", "-p", out_dir
-  out = Outputs.new(out_dir)
+  pop = Populations.new(indir: data_dir)
+  out = Outputs.new(dir: out_dir, pop: pop)
   split_us(indir: data_dir, out: out)
   split_world(indir: data_dir, out: out)
-  out.close
+  out.write
 end
 
 class Outputs
-  def initialize(dir)
+  def initialize(dir:, pop:)
     @dir = dir
+    @pop = pop
     @countries = Hash.new { |h,k| h[k] = Locality.new(k) }
   end
 
-  def update(country:, province: nil, county: nil, date:, cases:, deaths: nil)
-    @countries[country].update(date: date, cases: cases, deaths: deaths, children: [province, county])
+  def update(country:, province: nil, county: nil, date:, cases:, deaths: nil, province_fips: nil, county_fips: nil)
+    @countries[country].update(date: date, cases: cases, deaths: deaths, children: [[province, province_fips], [county, county_fips]])
   end
 
-  def close
+  def write
     _write_locations
     _write_cases
   end
@@ -39,19 +44,22 @@ class Outputs
     @countries.each do |_, country|
       _write_json ["cases", country.name],
         name: country.name,
-        population: 1000,
+        fips: country.fips,
+        population: @pop.get(country),
         cases: _counts(country.cases_by_date)
 
       country.children.each do |_, province|
         _write_json ["cases", country.name, province.name],
           name: "#{province.name}, #{country.name}",
-          population: 1000,
+          fips: province.fips,
+          population: @pop.get(country, province),
           cases: _counts(province.cases_by_date)
 
         province.children.each do |_, county|
           _write_json ["cases", country.name, province.name, county.name],
             name: "#{county.name}, #{province.name}, #{country.name}",
-            population: 1000,
+            fips: county.fips,
+            population: @pop.get(country, province, county),
             cases: _counts(county.cases_by_date)
         end
       end
@@ -76,6 +84,78 @@ class Outputs
     path = File.join(@dir, *file) + ".json"
     FileUtils.mkdir_p(File.dirname(path))
     File.write(path, JSON.dump(data))
+  rescue
+    p file
+    raise
+  end
+end
+
+class Populations
+  def initialize(indir:)
+    @indir = indir
+  end
+
+  def get(country, province = nil, county = nil)
+    if country.name == USA
+      get_us(province, county)
+    elsif province.nil? || province.name == WHOLE_COUNTRY
+      get_world(country)
+    else
+      nil
+    end
+  end
+
+  def get_us(state, county)
+    @uspop = 0
+    @fipspops ||= _read_csv("pop_est_2019.csv").each_with_object(Hash.new(0)) { |row, res|
+      pop = row["population"].to_i
+      res[row["fips"]] = pop
+      res[row["fips"][0,2]] += pop
+      @uspop += pop
+    }
+    if county
+      if county.name == "Unknown"
+        0
+      else
+        @fipspops.fetch(county.fips) {
+          w "WARNING: No population data for #{state.name} (#{state.fips}) / #{county.name} (#{county.fips})"
+          0
+        }
+      end
+    elsif state
+      @fipspops.fetch(state.fips) {
+          w "WARNING: No population data for #{state.name} (#{state.fips})"
+          0
+      }
+    else
+      @uspop
+    end
+  end
+
+  def get_world(country)
+    @worldpop ||= _read_csv("WPP2019_TotalPopulationBySex.csv").each_with_object({}) { |row, res|
+      if row["VarID"] == "2"
+        res[row["Location"]] = (row["PopTotal"].to_f * 1000).to_i
+      end
+    }
+    name = case country.name
+           when "Burma"
+             "Myanmar"
+           when "Korea, South"
+             "Republic of Korea"
+           else
+             country.name
+           end
+    @worldpop.fetch(name) {
+      w "WARNING: No population data for #{country.name} (aka #{name})"
+      @worldpop[name] = 0
+    }
+  end
+
+  def _read_csv(file)
+    path = File.join(@indir, file)
+    puts path
+    CSV.read(path, headers: true, encoding: "utf-8")
   end
 end
 
@@ -87,14 +167,18 @@ class Locality
     @deaths_by_date = Hash.new(0)
   end
 
-  attr_reader :name, :children
+  attr_reader :name, :fips, :children
   attr_reader :cases_by_date, :deaths_by_date
 
-  def update(date:, cases:, deaths:, children:)
+  def update(date:, cases:, deaths:, children:, fips: nil)
+    @fips = fips || @fips
     @cases_by_date[date] += cases
     @deaths_by_date[date] += deaths if deaths
     child, *rest = children
-    @children[child].update(date: date, cases: cases, deaths: deaths, children: rest) if child
+    name, fips = child
+    if name
+      @children[name].update(date: date, cases: cases, deaths: deaths, children: rest, fips: fips)
+    end
   end
 end
 
@@ -107,17 +191,19 @@ class USCountiesRow
     @date = row["date"]
     @county = row["county"]
     @state = row["state"]
-    #@fips = row["fips"]
-    @cases = row["cases"]
-    @deaths = row["deaths"]
+    @fips = row["fips"]
+    @cases = row["cases"].to_i
+    @deaths = row["deaths"].to_i
   end
 
   def update(out)
     out.update \
       date: @date,
-      country: "US",
+      country: USA,
       province: @state,
+      province_fips: @fips && @fips[0,2],
       county: @county,
+      county_fips: @fips,
       cases: @cases,
       deaths: @deaths
   end
@@ -140,8 +226,8 @@ class WorldRow
       out.update \
         date: Dates.parse(date),
         country: country,
-        province: province,
-        cases: @row[date]
+        province: province || WHOLE_COUNTRY,
+        cases: @row[date].to_i
     end
   end
 end
@@ -168,15 +254,20 @@ def read_csv(file, dir:, row_type:, out:, progress: 10000)
   print path
   print " "
   n = progress
-  CSV.foreach(path, headers: true, converters: %i[numeric date], encoding: "utf-8") do |row|
+  CSV.foreach(path, headers: true, encoding: "utf-8") do |row|
     n -= 1
     if n == 0
+      return if ENV["SAMPLE"] # useful for debugging later parts of this script.
       print "."
       n = progress
     end
     row_type.new(row).update(out)
   end
   print "\n"
+end
+
+def w(msg)
+  puts msg unless ENV["QUIET"]
 end
 
 main
