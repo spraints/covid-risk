@@ -21,62 +21,70 @@ function render(country: Country | null, province: Province | null, county: Coun
   graph!.innerText = `need to fetch ${url}`
 }
 
-observe('.locations', (locationDiv) => {
-  const countrySel = locationDiv.querySelector('.js-country') as HTMLSelectElement
-  countrySel.innerHTML = buildLocationOptions<Country>(locationData.countries)
-  const provinceSel = locationDiv.querySelector('.js-province') as HTMLSelectElement
-  provinceSel.hidden = true
-  const countySel = locationDiv.querySelector('.js-county') as HTMLSelectElement
-  countySel.hidden = true
+observe('.locations', locationDiv => {
+  locationDataPromise.then(locationData => {
+    const countrySel = locationDiv.querySelector('.js-country') as HTMLSelectElement
+    countrySel.innerHTML = buildLocationOptions<Country>(locationData.countries, 'choose country')
+    const provinceSel = locationDiv.querySelector('.js-province') as HTMLSelectElement
+    provinceSel.hidden = true
+    const countySel = locationDiv.querySelector('.js-county') as HTMLSelectElement
+    countySel.hidden = true
+  })
 })
 
 on('change', '.js-country', (e) => {
   const countrySel = e.currentTarget as HTMLSelectElement
-  const provinceSel = document.querySelector('.js-province') as HTMLSelectElement
-  const countySel = document.querySelector('.js-county') as HTMLSelectElement
+  locationDataPromise.then(locationData => {
+    const provinceSel = document.querySelector('.js-province') as HTMLSelectElement
+    const countySel = document.querySelector('.js-county') as HTMLSelectElement
 
-  provinceSel.hidden = true
-  countySel.hidden = true
+    provinceSel.hidden = true
+    countySel.hidden = true
 
-  const country = findLocation<Country>(locationData.countries, countrySel.value)
-  render(country, null, null)
+    const country = findLocation<Country>(locationData.countries, countrySel.value)
+    render(country, null, null)
 
-  if (!country) return
+    if (!country) return
 
-  if (country.provinces) {
-    provinceSel.innerHTML = buildLocationOptions<Province>(country.provinces)
-    provinceSel.hidden = false
-  }
+    if (country.provinces) {
+      provinceSel.innerHTML = buildLocationOptions<Province>(country.provinces, 'all provinces')
+      provinceSel.hidden = false
+    }
+  })
 })
 
 on('change', '.js-province', (e) => {
-  const countrySel = document.querySelector('.js-country') as HTMLSelectElement
   const provinceSel = e.currentTarget as HTMLSelectElement
-  const countySel = document.querySelector('.js-county') as HTMLSelectElement
+  locationDataPromise.then(locationData => {
+    const countrySel = document.querySelector('.js-country') as HTMLSelectElement
+    const countySel = document.querySelector('.js-county') as HTMLSelectElement
 
-  countySel.hidden = true
+    countySel.hidden = true
 
-  const country = findLocation<Country>(locationData.countries, countrySel.value)
-  const province = findLocation<Province>(country!.provinces!, provinceSel.value)
-  render(country, province, null)
+    const country = findLocation<Country>(locationData.countries, countrySel.value)
+    const province = findLocation<Province>(country!.provinces!, provinceSel.value)
+    render(country, province, null)
 
-  if (!province) return
+    if (!province) return
 
-  if (province.counties) {
-    countySel.innerHTML = buildLocationOptions<County>(province.counties)
-    countySel.hidden = false
-  }
+    if (province.counties) {
+      countySel.innerHTML = buildLocationOptions<County>(province.counties, 'all counties')
+      countySel.hidden = false
+    }
+  })
 })
 
 on('change', '.js-county', (e) => {
-  const countrySel = document.querySelector('.js-country') as HTMLSelectElement
-  const provinceSel = document.querySelector('.js-province') as HTMLSelectElement
   const countySel = e.currentTarget as HTMLSelectElement
+  locationDataPromise.then(locationData => {
+    const countrySel = document.querySelector('.js-country') as HTMLSelectElement
+    const provinceSel = document.querySelector('.js-province') as HTMLSelectElement
 
-  const country = findLocation<Country>(locationData.countries, countrySel.value)
-  const province = findLocation<Province>(country!.provinces!, provinceSel.value)
-  const county = findLocation<County>(province!.counties!, countySel.value)
-  render(country, province, county)
+    const country = findLocation<Country>(locationData.countries, countrySel.value)
+    const province = findLocation<Province>(country!.provinces!, provinceSel.value)
+    const county = findLocation<County>(province!.counties!, countySel.value)
+    render(country, province, county)
+  })
 })
 
 interface Named {
@@ -88,8 +96,8 @@ function findLocation<T extends Named>(locations: T[], name: string): T | null {
   return locations[parseInt(name)]
 }
 
-function buildLocationOptions<T extends Named>(locations: T[]) {
-  const opts = ['<option value=""></option>']
+function buildLocationOptions<T extends Named>(locations: T[], label: string) {
+  const opts = [`<option value="">--${label}--</option>`]
   for (let i = 0; i < locations.length; i++) {
     opts.push(`<option value="${i}">${locations[i].name}</option>`)
   }
@@ -130,7 +138,7 @@ type County = {
   name: string
 }
 
-function getLocations(url: string) : LocationData {
+async function getLocations(url: string) : Promise<LocationData> {
   // TODO
   return {
     countries: [
