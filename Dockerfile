@@ -1,3 +1,4 @@
+####################
 FROM ruby:2.7.1 AS data
 
 RUN apt-get update && apt-get install -y curl ruby
@@ -10,6 +11,20 @@ RUN script/get-data
 COPY script/split-data script/split-data
 RUN script/split-data
 
+####################
+FROM node:14.3.0 AS assets
+
+WORKDIR /src
+
+COPY package.json      package.json
+COPY package-lock.json package-lock.json
+RUN npm install
+
+COPY . .
+
+RUN npm run build-assets
+
+####################
 FROM nginx:1.19
 
 WORKDIR /site

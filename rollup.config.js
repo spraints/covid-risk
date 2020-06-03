@@ -1,4 +1,6 @@
 import typescript from '@rollup/plugin-typescript'
+import resolve from '@rollup/plugin-node-resolve'
+import commonjs from '@rollup/plugin-commonjs'
 
 export default {
   input: 'assets/app.js',
@@ -10,6 +12,8 @@ export default {
   treeshake: true,
   plugins: [
     // common({include: [ 'node_modules/$mod/**' ],
-    typescript()
+    typescript(),
+    resolve(),
+    commonjs()
   ]
 }

@@ -2,12 +2,25 @@
 <html>
   <head>
     <title>Will I meet someone with COVID-19?</title>
-<style>
-sup, sub { font-size: smaller; }
-</style>
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.0/css/bootstrap.min.css" integrity="sha384-9aIt2nRpC12Uk9gS9baDl411NQApFmC26EwAOH8WgZl5MYYxFfc+NcPb1dKGj7Sk" crossorigin="anonymous">
+    <link rel="stylesheet" href="/app.css">
   </head>
   <body>
     <section>
+      <h3>Should I go or stay?</h3>
+      <div class="options">
+        <!-- What's your desired safeness? -->
+        <!-- What's your group size? -->
+        <!-- Do you want to see safety or risk? -->
+        <!-- Which location? -->
+      </div>
+      <div class="locations">
+        <select class="js-country"></select>
+        <select class="js-province"></select>
+        <select class="js-county"></select>
+      </div>
+      <div class="graph">
+      </div>
     </section>
     <section>
       <h3>My model of COVID-19 risk</h3>
@@ -89,5 +102,6 @@ sup, sub { font-size: smaller; }
         commerce between those two sets of countries.
       </p>
     </section>
+    <script src="/assets/app.js"></script>
   </body>
 </html>
