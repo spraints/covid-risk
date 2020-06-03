@@ -1,7 +1,7 @@
 import {observe} from 'selector-observer'
 import {on} from 'delegated-events'
 
-function render(country: Country | null, province: Province | null, county: County | null) {
+async function render(country: Country | null, province: Province | null, county: County | null) {
   const graph = document.querySelector('.graph') as HTMLDivElement
 
   if (!country) {
@@ -9,7 +9,7 @@ function render(country: Country | null, province: Province | null, county: Coun
     return
   }
 
-  let url = `/data/${country.name}`
+  let url = `/data/cases/${country.name}`
   if (province) {
     url = url + '/' + province.name
     if (county) {
@@ -18,7 +18,12 @@ function render(country: Country | null, province: Province | null, county: Coun
   }
   url = url + '.json'
 
-  graph!.innerText = `need to fetch ${url}`
+  const response = await fetch(url)
+  if (!response.ok) throw new Error('error getting ' + url)
+  const data = await response.json()
+
+  graph!.innerHTML = '<pre>' + JSON.stringify(data, null, ' ') + '</pre>'
+  // TODO! d3!
 }
 
 observe('.locations', locationDiv => {
@@ -139,18 +144,9 @@ type County = {
 }
 
 async function getLocations(url: string) : Promise<LocationData> {
-  // TODO
-  return {
-    countries: [
-      {name: "Example 1", provinces: [
-        {name: "A"},
-        {name: "B", counties: [
-          {name: "CC"}
-        ]}
-      ]},
-      {name: "Example 2"}
-    ]
-  }
+  const response = await fetch(url)
+  if (!response.ok) throw new Error('error getting ' + url)
+  return await response.json()
 }
 
 const locationData = getLocations("/data/locations.json")

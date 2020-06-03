@@ -22,7 +22,7 @@ RUN npm install
 
 COPY . .
 
-RUN npm run build-assets
+RUN npm run tsc && npm run build-js
 
 ####################
 FROM nginx:1.19

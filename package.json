@@ -1,7 +1,7 @@
 {
   "private": true,
   "scripts": {
-    "build-assets": "rollup -c rollup.config.js",
+    "build-js": "rollup -c rollup.config.js",
     "tsc": "tsc"
   },
   "devDependencies": {
