@@ -39,16 +39,19 @@ class Outputs
     @countries.each do |_, country|
       _write_json ["cases", country.name],
         name: country.name,
+        population: 1000,
         cases: _counts(country.cases_by_date)
 
       country.children.each do |_, province|
         _write_json ["cases", country.name, province.name],
           name: "#{province.name}, #{country.name}",
+          population: 1000,
           cases: _counts(province.cases_by_date)
 
         province.children.each do |_, county|
           _write_json ["cases", country.name, province.name, county.name],
             name: "#{county.name}, #{province.name}, #{country.name}",
+            population: 1000,
             cases: _counts(county.cases_by_date)
         end
       end

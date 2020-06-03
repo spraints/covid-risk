@@ -4,7 +4,13 @@ datadir="$(dirname "$0")/../data"
 mkdir -p $datadir
 cd $datadir
 
-curl -LO https://github.com/nytimes/covid-19-data/raw/master/us-states.csv
+#curl -LO https://github.com/nytimes/covid-19-data/raw/master/us-states.csv
 curl -LO https://github.com/nytimes/covid-19-data/raw/master/us-counties.csv
 
 curl -LO https://github.com/CSSEGISandData/COVID-19/raw/master/csse_covid_19_data/csse_covid_19_time_series/time_series_covid19_confirmed_global.csv
+
+test -f pop_est_2019.csv ||
+  curl -LO https://github.com/nytimes/covid-19-data/raw/63d02b9d1073eff62827daf155a4fe1ef4ab7188/pop_est_2019.csv
+
+test -f WPP2019_TotalPopulationBySex.csv ||
+  curl -LO 'https://population.un.org/wpp/Download/Files/1_Indicators%20(Standard)/CSV_FILES/WPP2019_TotalPopulationBySex.csv'

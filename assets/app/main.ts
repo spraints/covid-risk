@@ -16,14 +16,15 @@ async function render(country: Country | null, province: Province | null, county
       url = url + '/' + county.name
     }
   }
-  url = url + '.json'
+  //url = url + '.json?' + Math.floor(Date.now() / 3600 / 1000)
+  url = url + '.json?' + Date.now()
 
   const response = await fetch(url)
   if (!response.ok) throw new Error('error getting ' + url)
   const data = await response.json()
 
-  graph!.innerHTML = '<pre>' + JSON.stringify(data, null, ' ') + '</pre>'
   // TODO! d3!
+  graph!.innerHTML = '<pre>' + JSON.stringify(data, null, ' ') + '</pre>'
 }
 
 observe('.locations', locationDiv => {
@@ -149,4 +150,4 @@ async function getLocations(url: string) : Promise<LocationData> {
   return await response.json()
 }
 
-const locationData = getLocations("/data/locations.json")
+const locationDataPromise = getLocations("/data/locations.json")
