@@ -48,6 +48,8 @@ class Outputs
         population: @pop.get(country),
         cases: _counts(country.cases_by_date)
 
+      next if country.children.keys == [WHOLE_COUNTRY]
+
       country.children.each do |_, province|
         _write_json ["cases", country.name, province.name],
           name: "#{province.name}, #{country.name}",
@@ -71,7 +73,7 @@ class Outputs
   end
 
   def _localities(localities, key, *other_keys)
-    return {} if localities.nil? || localities.empty?
+    return {} if localities.nil? || localities.empty? || localities.keys == [WHOLE_COUNTRY]
     { key => localities.sort_by(&:first).map { |_, l| _locality(l, *other_keys) } }
   end
 
