@@ -133,24 +133,38 @@ class Populations
   end
 
   def get_world(country)
+    return 23_780_000 if country.name == "Taiwan*"
+    return 95_540_000 if country.name == "Vietnam"
+
     @worldpop ||= _read_csv("WPP2019_TotalPopulationBySex.csv").each_with_object({}) { |row, res|
       if row["VarID"] == "2"
         res[row["Location"]] = (row["PopTotal"].to_f * 1000).to_i
       end
     }
-    name = case country.name
-           when "Burma"
-             "Myanmar"
-           when "Korea, South"
-             "Republic of Korea"
-           else
-             country.name
-           end
+
+    name = COUNTRY_NAMES.fetch(country.name, country.name)
+
     @worldpop.fetch(name) {
       w "WARNING: No population data for #{country.name} (aka #{name})"
       @worldpop[name] = 0
     }
   end
+
+  COUNTRY_NAMES = {
+    "Bolivia" => "Bolivia (Plurinational State of)",
+    "Brunei" => "Brunei Darussalam",
+    "Burma" => "Myanmar",
+    "Congro (Brazzaville)" => "Congo",
+    "Congro (Kinshasa)" => "Congo",
+    "Cote d'Ivoire" => "Côte d'Ivoire",
+    "Iran" => "Iran (Islamic Republic of)",
+    "Korea, South" => "Republic of Korea",
+    "Moldova" => "Republic of Moldova",
+    "Russia" => "Russian Federation",
+    "Syria" => "Syrian Arab Republic",
+    "Tanzania" => "United Republic of Tanzania",
+    "Venezuela" => "Venezuela (Bolivarian Republic of)",
+  }
 
   def _read_csv(file)
     path = File.join(@indir, file)
