@@ -11,7 +11,6 @@ export default {
   },
   treeshake: true,
   plugins: [
-    // common({include: [ 'node_modules/$mod/**' ],
     typescript(),
     resolve(),
     commonjs()

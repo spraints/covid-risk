@@ -21,11 +21,84 @@ async function render(country: Country | null, province: Province | null, county
 
   const response = await fetch(url)
   if (!response.ok) throw new Error('error getting ' + url)
-  const data = await response.json()
+  const data: Cases = await response.json()
+
+  if (data.population) {
+    const model = new Model(data.cases, data.population)
+
+    graph.innerHTML =
+      `<h4>${data.name}</h4>` +
+      `<p>Population: ${data.population}</p>` +
+      `<p>Cases: ${model.last[1]} as of ${model.last[0]}</p>` +
+      `<p>Last week: ${model.lastWeekCount} since ${model.previous[0]}</p>` +
+      `<ul>` +
+      `<li>P<sub>10</sub> = ${fmtPct(model.p(10))}</li>` +
+      `<li>P<sub>100</sub> = ${fmtPct(model.p(100))}</li>` +
+      `<li>P<sub>1000</sub> = ${fmtPct(model.p(1000))}</li>` +
+      `</ul>` +
+      `<p>when P<sub>n</sub> < 5%, n = ${model.n(0.05)}</p>`
+  } else {
+    const model = new Model(data.cases, 0)
+
+    graph.innerHTML =
+      `<h4>${data.name}</h4>` +
+      `<p>Population: not available</p>` +
+      `<p>Cases: ${model.last[1]} as of ${model.last[0]}</p>` +
+      `<p>Last week: ${model.lastWeekCount} since ${model.previous[0]}</p>`
+  }
 
   // TODO! d3!
-  graph!.innerHTML = '<pre>' + JSON.stringify(data, null, ' ') + '</pre>'
 }
+
+function fmtPct(p: number): string {
+  return `${100.0 * p} %`
+}
+
+class Model {
+  cases: DateCount[]
+  population: number
+
+  constructor(cases: DateCount[], population: number) {
+    this.cases = cases
+    this.population = population
+  }
+
+  p(n: number) {
+    return 1 - Math.pow(1 - this.p1, n)
+  }
+
+  n(p: number) {
+    // Pn = 1 - (1 - p)^n
+    // 1 - Pn = (1 - p)^n
+    // log(1 - Pn) = n * log(1 - p)
+    // n = log(1 - Pn) / log(1 - p)
+    return Math.log(1 - p) / Math.log(1 - this.p1)
+  }
+
+  get p1(): number {
+    return 2 * this.lastWeekCount / this.population
+  }
+
+  get last(): DateCount {
+    return this.cases[this.cases.length - 1]
+  }
+
+  get lastWeekCount(): number {
+    return this.last[1] - this.previous[1]
+  }
+
+  get previous(): DateCount {
+    return (this.cases.length > 7) ? this.cases[this.cases.length - 8] : ['', 0]
+  }
+}
+
+type Cases = {
+  name: string
+  population?: number | null
+  cases: DateCount[]
+}
+
+type DateCount = [string, number]
 
 observe('.locations', locationDiv => {
   locationDataPromise.then(locationData => {
