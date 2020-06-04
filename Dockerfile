@@ -23,7 +23,9 @@ COPY package.json      package.json
 COPY package-lock.json package-lock.json
 RUN npm install
 
-COPY . .
+COPY rollup.config.js rollup.config.js
+COPY tsconfig.json    tsconfig.json
+COPY assets           assets
 
 RUN npm run tsc && npm run build-js
 
