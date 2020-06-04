@@ -5,6 +5,9 @@ RUN apt-get update && apt-get install -y curl ruby
 
 WORKDIR /src
 
+ARG CACHE_VERSION=0
+RUN echo $CACHE_VERSION > version
+
 COPY script/get-data script/get-data
 RUN script/get-data
 
