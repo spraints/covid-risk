@@ -4,6 +4,9 @@ services:
   web:
     build:
       context: .
+      args:
+        # bump this to force new data
+        - CACHE_VERSION=0
     volumes:
       - ./public:/usr/share/nginx/html
     ports:

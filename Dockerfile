@@ -32,7 +32,7 @@ RUN npm run tsc && npm run build-js
 ####################
 FROM nginx:1.19
 
-WORKDIR /site
-#COPY conf.d /etc/nginx/conf.d
-COPY public /usr/share/nginx/html
-COPY --from=data /src/public/data /usr/share/nginx/html/data
+COPY               public           /usr/share/nginx/html
+COPY --from=assets /src/public      /usr/share/nginx/html
+COPY --from=data   /src/public/data /usr/share/nginx/html/data
+COPY --from=data   /src/version     /usr/share/nginx/html/data/version
