@@ -2,6 +2,7 @@ import {observe} from 'selector-observer'
 import {on} from 'delegated-events'
 
 import {Country, Province, County} from './locations'
+import {SelectionStore} from './selection-store'
 import {render} from './render'
 
 type LocationData = {
@@ -12,14 +13,32 @@ interface Named {
   name: string
 }
 
+const selectionStore = new SelectionStore()
+
+const NULL_COUNTRY = 'choose country'
+const NULL_PROVINCE = 'all provinces'
+const NULL_COUNTY = 'all counties'
+
 observe('.locations', locationDiv => {
   locationDataPromise.then(locationData => {
+    let [countryName, provinceName, countyName] = selectionStore.getPlace()
+
     const countrySel = locationDiv.querySelector('.js-country') as HTMLSelectElement
-    countrySel.innerHTML = buildLocationOptions<Country>(locationData.countries, 'choose country')
     const provinceSel = locationDiv.querySelector('.js-province') as HTMLSelectElement
-    provinceSel.hidden = true
     const countySel = locationDiv.querySelector('.js-county') as HTMLSelectElement
-    countySel.hidden = true
+
+    const country = buildLocationOptions<Country>(countrySel, locationData.countries, NULL_COUNTRY, countryName)
+    if (country && country.provinces) {
+      const province = buildLocationOptions<Province>(provinceSel, country.provinces, NULL_PROVINCE, provinceName)
+      if (province && province.counties) {
+        buildLocationOptions<County>(countySel, province.counties, NULL_COUNTY, countyName)
+      } else {
+        countySel.hidden = true
+      }
+    } else {
+      provinceSel.hidden = true
+      countySel.hidden = true
+    }
   })
 })
 
@@ -34,11 +53,12 @@ on('change', '.js-country', (e) => {
 
     const country = findLocation<Country>(locationData.countries, countrySel.value)
     render(country, null, null)
+    selectionStore.setPlace([country?.name])
 
     if (!country) return
 
     if (country.provinces) {
-      provinceSel.innerHTML = buildLocationOptions<Province>(country.provinces, 'all provinces')
+      buildLocationOptions<Province>(provinceSel, country.provinces, NULL_PROVINCE, null)
       provinceSel.hidden = false
     }
   })
@@ -55,11 +75,12 @@ on('change', '.js-province', (e) => {
     const country = findLocation<Country>(locationData.countries, countrySel.value)
     const province = findLocation<Province>(country!.provinces!, provinceSel.value)
     render(country, province, null)
+    selectionStore.setPlace([country!.name, province?.name])
 
     if (!province) return
 
     if (province.counties) {
-      countySel.innerHTML = buildLocationOptions<County>(province.counties, 'all counties')
+      buildLocationOptions<County>(countySel, province.counties, NULL_COUNTY, null)
       countySel.hidden = false
     }
   })
@@ -75,6 +96,7 @@ on('change', '.js-county', (e) => {
     const province = findLocation<Province>(country!.provinces!, provinceSel.value)
     const county = findLocation<County>(province!.counties!, countySel.value)
     render(country, province, county)
+    selectionStore.setPlace([country!.name, province!.name, county?.name])
   })
 })
 
@@ -83,12 +105,19 @@ function findLocation<T extends Named>(locations: T[], name: string): T | null {
   return locations[parseInt(name)]
 }
 
-function buildLocationOptions<T extends Named>(locations: T[], label: string) {
+function buildLocationOptions<T extends Named>(sel: HTMLSelectElement, locations: T[], label: string, chosen: string | null | undefined): T | null {
   const opts = [`<option value="">--${label}--</option>`]
+  let ret: T | null = null
   for (let i = 0; i < locations.length; i++) {
-    opts.push(`<option value="${i}">${locations[i].name}</option>`)
+    if (chosen === locations[i].name) {
+      ret = locations[i]
+      opts.push(`<option value="${i}" selected>${locations[i].name}</option>`)
+    } else {
+      opts.push(`<option value="${i}">${locations[i].name}</option>`)
+    }
   }
-  return opts.join('')
+  sel.innerHTML = opts.join('')
+  return ret
 }
 
 function showOpts(selSelector: string, optSelector: string) {
