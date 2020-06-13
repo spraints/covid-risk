@@ -1,12 +1,18 @@
 export type DateCount = [string, number]
 
+type Options = {
+  c?: number
+}
+
 export class Model {
   cases: DateCount[]
   population: number
+  c: number
 
-  constructor(cases: DateCount[], population: number) {
+  constructor(cases: DateCount[], population: number, {c = 2}: Options = {}) {
     this.cases = cases
     this.population = population
+    this.c = c
   }
 
   p(n: number) {
@@ -22,7 +28,7 @@ export class Model {
   }
 
   get p1(): number {
-    return 2 * this.lastWeekCount / this.population
+    return this.c * this.lastWeekCount / this.population
   }
 
   get last(): DateCount {

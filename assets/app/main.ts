@@ -104,6 +104,28 @@ on('change', '.js-county', (e) => {
   })
 })
 
+on('change', '.js-rerender', () => {
+  locationDataPromise.then(locationData => {
+    const countrySel = document.querySelector('.js-country') as HTMLSelectElement
+    const provinceSel = document.querySelector('.js-province') as HTMLSelectElement
+    const countySel = document.querySelector('.js-county') as HTMLSelectElement
+
+    let country = null
+    let province = null
+    let county = null
+
+    country = findLocation<Country>(locationData.countries, countrySel.value)
+    if (country) {
+      province = findLocation<Province>(country.provinces!, provinceSel.value)
+      if (province) {
+        county = findLocation<County>(province!.counties!, countySel.value)
+      }
+    }
+
+    render(country, province, county)
+  })
+})
+
 function findLocation<T extends Named>(locations: T[], name: string): T | null {
   if (name === '') return null
   return locations[parseInt(name)]

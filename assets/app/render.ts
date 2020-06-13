@@ -30,18 +30,20 @@ export async function render(country: Country | null, province: Province | null,
   const data: Cases = await response.json()
 
   if (data.population) {
-    const model = new Model(data.cases, data.population)
+    const model = new Model(data.cases, data.population, {c: getC()})
 
+    const pn = getPn()
     graph.innerHTML =
       factRow('Population', data.population) +
       factRow('Cases', model.last[1]) +
       factRow('Last week', model.lastWeekCount) +
       factRow('', `${model.previous[0]} - ${model.last[0]}`) +
       '<br>' +
+      factRow(m('P<sub>1</sub>'), fmtPct(model.p(1))) +
       factRow(m('P<sub>10</sub>'), fmtPct(model.p(10))) +
       factRow(m('P<sub>100</sub>'), fmtPct(model.p(100))) +
       factRow(m('P<sub>1000</sub>'), fmtPct(model.p(1000))) +
-      factRow(`${m('n')}, when ${m('P<sub>n</sub>')} < 5%`, Math.round(model.n(0.05)))
+      factRow(`${m('n')}, when ${m('P<sub>n</sub>')} < ${pn}%`, Math.round(model.n(pn/100.0)))
   } else {
     const model = new Model(data.cases, 0)
 
@@ -53,6 +55,18 @@ export async function render(country: Country | null, province: Province | null,
   }
 
   // TODO! d3!
+}
+
+function getC(): number {
+  const el = document.querySelector('.js-c') as HTMLInputElement
+  if (el) return parseFloat(el.value)
+  return 2
+}
+
+function getPn(): number {
+  const el = document.querySelector('.js-pn') as HTMLInputElement
+  if (el) return parseFloat(el.value)
+  return 5
 }
 
 function factRow(label: string, data: any): string {
