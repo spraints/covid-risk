@@ -7,7 +7,7 @@
   </head>
   <body>
     <section>
-      <h3>Should I go or stay?</h3>
+      <h3>How likely am I to meet someone with COVID-19?</h3>
       <div class="options">
         <!-- What's your desired safeness? -->
         <!-- What's your group size? -->
@@ -23,52 +23,39 @@
       </div>
     </section>
     <section>
-      <h3>My model of COVID-19 risk</h3>
+      <h3><i>P<sub>n</sub> = 1 - (1 - P<sub>1</sub>)<sup>n</sup></i></h3>
       <p>
-        In college, I wasn't expecting to like my Probability class. The
-        professor was kind of goofy. But I really liked how we were able
-        to predict things more accurately than by using intuition. The
-        <a href="https://en.wikipedia.org/wiki/Birthday_problem">birthday
-        problem</a> is perhaps the most memorable of these things. We
-        also talked about some space disasters and how, if you did the
-        math correctly, it would have been less surprising.
+        It's a little bit simplistic, so probably not terribly predictive.
+        But I'm using this to figure out which sizes of groups are OK to participate in.
+        <i>P<sub>n</sub></i> is the probability that a group of <i>n</i> people will have at least one person who's COVID-19+.
+        <i>P<sub>1</sub></i> is the probability that a random person who might be in a group is COVID-19+.
       </p>
       <p>
-        The main insight that I gained is that, even when a particular
-        occurence is very unlikely, when you put it in a group the
-        probability might go up much faster than you expect. Applied
-        to our current situation, even though it's very unlikely that
-        you'll run into an individual person with COVID-19, you would
-        need a surprisingly small number of people in the same place
-        to have at least one person who's infected.
+        Coming up with <i>P<sub>1</sub></i> is a challenge.
+        I've chosen to make it <i>i / N</i>, where <i>N</i> is the population and <i>i</i> is a guess at the number of people who are contagious and not staying home.
+        I have set <i>i = C c<sub>7</sub></i>, where <i>c<sub>7</sub></i> is the number of new cases in the last week.
+        My assumption here is that the circulating contagious people are mostly those who are about to develop symptoms, and that anyone who has tested positive is quarantined.
+        I made <i>C = 2</i> as a somewhat random guess.
+        It's greater than one to account for undetected cases.
+        Another thing that affects <i>C</i> is under-testing.
+      </p>
+      <h3>How to use this?</h3>
+      <p>
+        Primarily, this useful for comparing the relative risk of going out in communities with similar cultures (in other words, where testing and reporting are likely to be similar).
+        I'm using it to gauge whether it's safe to go to events that involve a lot of people: a group of friends, church, classes.
+        There are lots of other factors, too.
+        Is it indoors or outdoors?
+        Will it be crowded or spaced out?
+        Will people be talking to each other?
+        Will people be talking to each other briefly or for a long time?
+        Will everyone be singing?
       </p>
       <p>
-        This page has a model where you can choose a locality and a risk
-        tolerance and see the largest group size you should be a part of.
-        Remember that it's just a model. It's most useful in giving you
-        a picture of how much different the risk level is between, say,
-        a group of 10 and a group of 100. It's not scientifically
-        rigorous. It's how my very dusty memory of probability is
-        processing things today. It also deals with probabilities, which
-        are much better at predicting things across an entire population
-        than for a particular individual.
+        Make <i>C</i> bigger or smaller based on whether you think the last week's new case count is close to accurate (1) or too small (&gt;=2).
       </p>
       <p>
-        The formula I'm using is <i>P<sub>n</sub> = 1 - (1 - p)<sup>n</sup></i>.
-        <i>p</i> is the probability that a random individual you meet is
-        infected. <i>n</i> is the group size. <i>P<sub>n</sub></i> is the
-        probability that someone in a group of <i>n</i> is infected.
-      </p>
-      <p>
-        Coming up with <i>p</i> is a challenge. I've chosen to make it
-        <i>i N<sup>-1</sup></i>, where <i>N</i> is the population and
-        <i>i</i> is a guess at the number of people who are contagious
-        and still circulating. I have set <i>i = C c<sub>7</sub></i>,
-        where <i>c<sub>7</sub></i> is the number of new cases in the last
-        week. My assumption here is that the circulating contagious
-        people are mostly those who are about to develop symptoms, and
-        that anyone who has tested positive is quarantined. <i>C = 2</i>,
-        to account for undetected cases.
+        Make <i>P<sub>n</sub></i> the percent probability you're comfortable with, and it'll show you the maximum group size you should be in.
+        The default is 5% (one in twenty chance of a COVID-19+ individual at an event).
       </p>
     </section>
     <section>
@@ -83,23 +70,6 @@
         Everything we do is a balance between risk and reward. COVID-19 has
         changed the level of risk, which means we might not choose to do
         all of the same things we chose to do in the past.
-      </p>
-      <p>
-        This page is my attempt to explore the risk that COVID-19 introduces
-        to gatherings. It's not perfect, but it's how I'm working through
-        this.
-      </p>
-      <p>
-        To me, the ideal scenario would have been that, in March, the
-        US stayed at home and reduced the rate of infection to the point
-        where, now, we'd be able to go back to doing almost everything with
-        really minimal risk. Let's call that a squished curve. A do nothing
-        approach would have been an uncontrolled exponential curve, which
-        would have been a disaster. What we did flattened the curve, but
-        it's made it so that the disease will be around for much longer.
-        I anticipate the second half of 2020 will see a split between
-        countries with squished curves and flattened curves, and much less
-        commerce between those two sets of countries.
       </p>
     </section>
     <script src="/assets/app.js"></script>
