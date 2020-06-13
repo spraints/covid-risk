@@ -2,9 +2,11 @@ import * as d3 from 'd3'
 import {Cases} from './types'
 import clear from './clear'
 
+// see https://github.com/Lemoncode/d3js-typescript-examples
+
 export function renderRGraph(el: Element, data: Cases) {
   clear(el)
-  el.append(makeSVG() as Node)
+  el.append(makeSVG(convert(data)) as Node)
 }
 
 type Point = {
@@ -14,17 +16,33 @@ type Point = {
   y: number
 }
 
-const data: Point[] = [
-  {orient: "left", name: "1980", x: 3683, y: 2.4},
-  {orient: "right", name: "1990", x: 3776, y: 2.2}
-]
+const xaxislabel = "Cumulative cases"
+const yaxislabel = "New cases in the last week"
 
-const xaxislabel = "X-axis label"
-const yaxislabel = "Y-axis label"
+function convert(data: Cases): Point[] {
+  const res: Point[] = []
+  for (let i = 7; i < data.cases.length; i++) {
+    res.push({
+      orient: "left",
+      name: data.cases[i][0],
+      x: data.cases[i][1],
+      y: data.cases[i][1] - data.cases[i-7][1]
+    })
+  }
+  return res
+}
 
-function makeSVG() {
+function makeSVG(data: Point[]) {
   const svg = d3.create("svg")
       .attr("viewBox", `0 0 ${width} ${height}`);
+
+  const x = makeX(data)
+  const y = makeY(data)
+
+  const line = makeLine(x, y)
+
+  const xAxis = makeXAxis(data, x)
+  const yAxis = makeYAxis(data, y)
 
   const l = length(line(data));
 
@@ -88,8 +106,8 @@ function makeSVG() {
   return svg.node();
 }
 
-const width = 720
-const height = 720
+const width = 500
+const height = 500
 const margin = {top: 20, right: 30, bottom: 30, left: 40}
 
 function length(path: any) {
@@ -97,52 +115,62 @@ function length(path: any) {
   return n.getTotalLength()
 }
 
-const line = d3.line<Point>()
+function makeLine(x: any, y: any) {
+  return d3.line<Point>()
     .curve(d3.curveCatmullRom)
     .x(d => x(d.x))
     .y(d => y(d.y))
-
-const x = d3.scaleLinear()
-    .domain(d3.extent<Point, number>(data, d => d.x) as [number, number]).nice()
-    .range([margin.left, width - margin.right])
-
-const y = d3.scaleLinear()
-    .domain(d3.extent<Point, number>(data, d => d.y) as [number, number]).nice()
-    .range([height - margin.bottom, margin.top])
-
-function xAxis(g: any) {
-  return g
-    .attr("transform", `translate(0,${height - margin.bottom})`)
-    .call(d3.axisBottom(x).ticks(width / 80))
-    .call((g: any) => g.select(".domain").remove())
-    .call((g: any) => g.selectAll(".tick line").clone()
-              .attr("y2", -height)
-              .attr("stroke-opacity", 0.1))
-    .call((g: any) => g.append("text")
-              .attr("x", width - 4)
-              .attr("y", -4)
-              .attr("font-weight", "bold")
-              .attr("text-anchor", "end")
-              .attr("fill", "black")
-              .text(xaxislabel)
-              .call(halo))
 }
 
-function yAxis(g: any) {
-  return g
-    .attr("transform", `translate(${margin.left},0)`)
-    .call(d3.axisLeft(y).ticks(null, "$.2f"))
-    .call((g: any) => g.select(".domain").remove())
-    .call((g: any) => g.selectAll(".tick line").clone()
-              .attr("x2", width)
-              .attr("stroke-opacity", 0.1))
-    .call((g: any) => g.select(".tick:last-of-type text").clone()
-              .attr("x", 4)
-              .attr("text-anchor", "start")
-              .attr("font-weight", "bold")
-              .attr("fill", "black")
-              .text(yaxislabel)
-              .call(halo))
+function makeX(data: Point[]) {
+  return d3.scaleLog()
+    .domain(d3.extent<Point, number>(data, d => d.x) as [number, number]).nice()
+    .range([margin.left, width - margin.right])
+}
+
+function makeY(data: Point[]) {
+  return d3.scaleLog()
+    .domain(d3.extent<Point, number>(data, d => d.y) as [number, number]).nice()
+    .range([height - margin.bottom, margin.top])
+}
+
+function makeXAxis(data: Point[], x: any) {
+  return function(g: any) {
+    return g
+      .attr("transform", `translate(0,${height - margin.bottom})`)
+      .call(d3.axisBottom(x).ticks(null, "d"))
+      .call((g: any) => g.select(".domain").remove())
+      .call((g: any) => g.selectAll(".tick line").clone()
+                .attr("y2", -height)
+                .attr("stroke-opacity", 0.1))
+      .call((g: any) => g.append("text")
+                .attr("x", width - 4)
+                .attr("y", -4)
+                .attr("font-weight", "bold")
+                .attr("text-anchor", "end")
+                .attr("fill", "black")
+                .text(xaxislabel)
+                .call(halo))
+  }
+}
+
+function makeYAxis(data: Point[], y: any) {
+  return function(g: any) {
+    return g
+      .attr("transform", `translate(${margin.left},0)`)
+      .call(d3.axisLeft(y).ticks(null, "d"))
+      .call((g: any) => g.select(".domain").remove())
+      .call((g: any) => g.selectAll(".tick line").clone()
+                .attr("x2", width)
+                .attr("stroke-opacity", 0.1))
+      .call((g: any) => g.select(".tick:last-of-type text").clone()
+                .attr("x", 4)
+                .attr("text-anchor", "start")
+                .attr("font-weight", "bold")
+                .attr("fill", "black")
+                .text(yaxislabel)
+                .call(halo))
+  }
 }
 
 function halo(text: any) {
