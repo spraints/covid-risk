@@ -1,0 +1,9 @@
+#!/bin/bash
+
+set -e
+
+docker-compose -f docker-compose.scripts.yml build --force-rm build-assets
+
+docker-compose -f docker-compose.scripts.yml \
+  run -T --rm build-assets \
+  | tar xv -C public

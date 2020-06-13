@@ -1,0 +1,8 @@
+version: '3.4'
+
+services:
+  build-assets:
+    build:
+      context: .
+      target: assets
+    command: ["tar", "c", "-C", "/src/public", "assets"]
