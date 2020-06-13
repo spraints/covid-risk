@@ -2,6 +2,7 @@ import {Cases, DateCount} from './types'
 import {Country, Province, County} from './locations'
 import {Model} from './model'
 import {renderRGraph} from './render-r-graph'
+import {renderPGraph} from './render-p-graph'
 
 export async function render(country: Country | null, province: Province | null, county: County | null) {
   const report = document.querySelector('.report') as HTMLDivElement
@@ -42,6 +43,12 @@ export async function render(country: Country | null, province: Province | null,
       pctRow(m('P<sub>1000</sub>'), model.p(1000)) +
       '<br>' +
       factRow(`${m('n')} when ${m('P<sub>n</sub>')} < ${pn}%`, Math.round(model.n(pn/100.0)))
+
+    if (model.p(1) == 0) {
+      hidePGraph()
+    } else {
+      renderPGraph(document.querySelector('.p-graph')!, data, model)
+    }
   } else {
     const model = new Model(data.cases, 0)
 
@@ -49,9 +56,14 @@ export async function render(country: Country | null, province: Province | null,
       factRow('Population', 'not available') +
       factRow('Cases', model.last[1], `as of ${model.last[0]}`) +
       factRow('Last week', model.lastWeekCount, `since ${model.previous[0]}`)
-  }
 
-  // TODO! d3!
+    hidePGraph()
+  }
+}
+
+function hidePGraph() {
+  const el = document.querySelector('.p-graph') as HTMLElement
+  if (el) el.hidden = true
 }
 
 function getC(): number {
