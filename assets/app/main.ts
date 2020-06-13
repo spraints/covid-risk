@@ -19,6 +19,10 @@ const NULL_COUNTRY = 'choose country'
 const NULL_PROVINCE = 'all provinces'
 const NULL_COUNTY = 'all counties'
 
+observe('.js-version', versionEl => {
+  showVersion(versionEl as HTMLElement)
+})
+
 observe('.locations', locationDiv => {
   locationDataPromise.then(locationData => {
     let [countryName, provinceName, countyName] = selectionStore.getPlace()
@@ -159,6 +163,13 @@ function showOpts(selSelector: string, optSelector: string) {
   }
   for (const el of optEls) {
     (el as HTMLElement).hidden = false
+  }
+}
+
+async function showVersion(versionEl: HTMLElement) {
+  const response = await fetch('/data/version')
+  if (response.ok) {
+    versionEl.innerText = await response.text()
   }
 }
 
