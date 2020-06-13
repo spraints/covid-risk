@@ -1,11 +1,7 @@
+import {Cases, DateCount} from './types'
 import {Country, Province, County} from './locations'
-import {DateCount, Model} from './model'
-
-type Cases = {
-  name: string
-  population?: number | null
-  cases: DateCount[]
-}
+import {Model} from './model'
+import {renderRGraph} from './render-r-graph'
 
 export async function render(country: Country | null, province: Province | null, county: County | null) {
   const report = document.querySelector('.report') as HTMLDivElement
@@ -28,6 +24,8 @@ export async function render(country: Country | null, province: Province | null,
   const response = await fetch(url)
   if (!response.ok) throw new Error('error getting ' + url)
   const data: Cases = await response.json()
+
+  renderRGraph(document.querySelector('.r-graph')!, data)
 
   if (data.population) {
     const model = new Model(data.cases, data.population, {c: getC()})

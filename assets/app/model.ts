@@ -1,4 +1,4 @@
-export type DateCount = [string, number]
+import {DateCount} from './types'
 
 type Options = {
   c?: number
