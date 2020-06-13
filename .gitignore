@@ -1,2 +1,4 @@
 *.csv
 public/data
+public/assets
+node_modules
