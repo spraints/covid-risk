@@ -2,42 +2,43 @@
 <html>
   <head>
     <title>Will I meet someone with COVID-19?</title>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
     <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.0/css/bootstrap.min.css" integrity="sha384-9aIt2nRpC12Uk9gS9baDl411NQApFmC26EwAOH8WgZl5MYYxFfc+NcPb1dKGj7Sk" crossorigin="anonymous">
     <link rel="stylesheet" href="/app.css">
   </head>
   <body>
-    <section>
+    <section class="container">
       <h3>How likely am I to meet someone with COVID-19?</h3>
-      <div class="options">
-        <!-- What's your desired safeness? -->
-        <!-- What's your group size? -->
-        <!-- Do you want to see safety or risk? -->
-        <!-- Which location? -->
-      </div>
-      <div class="locations">
-        <select class="js-country"></select>
-        <select class="js-province"></select>
-        <select class="js-county"></select>
+      <div class="row locations">
+        <div class="col-md-4"><select class="js-country"></select></div>
+        <div class="col-md-4"><select class="js-province"></select></div>
+        <div class="col-md-4"><select class="js-county"></select></div>
       </div>
       <div class="graph">
       </div>
+      <div class="options">
+      </div>
     </section>
-    <section>
-      <h3><i>P<sub>n</sub> = 1 - (1 - P<sub>1</sub>)<sup>n</sup></i></h3>
+    <hr>
+    <section class="container">
+      <h3><span class="math">P<sub>n</sub> = 1 - (1 - P<sub>1</sub>)<sup>n</sup></span></h3>
       <p>
+        <span class="math">P<sub>1</sub></span> is the probability that a random person who might be in a group is COVID-19+.
+        <span class="math">1 - P<sub>1</sub></span> is the probability that said random person is not COVID-19+.
+        <span class="math">(1 - P<sub>1</sub>)<sup>n</sup></span> is the probability that <span class="math">n</span> random people are all not COVID-19+.
+        <span class="math">P<sub>n</sub></span> is the probability that there is one of <span class="math">n</span> random people who is COVID-19+.
         It's a little bit simplistic, so probably not terribly predictive.
         But I'm using this to figure out which sizes of groups are OK to participate in.
-        <i>P<sub>n</sub></i> is the probability that a group of <i>n</i> people will have at least one person who's COVID-19+.
-        <i>P<sub>1</sub></i> is the probability that a random person who might be in a group is COVID-19+.
       </p>
       <p>
-        Coming up with <i>P<sub>1</sub></i> is a challenge.
-        I've chosen to make it <i>i / N</i>, where <i>N</i> is the population and <i>i</i> is a guess at the number of people who are contagious and not staying home.
-        I have set <i>i = C c<sub>7</sub></i>, where <i>c<sub>7</sub></i> is the number of new cases in the last week.
+        Coming up with <span class="math">P<sub>1</sub></span> is a challenge.
+        I've chosen to make it <span class="math">i / N</span>, where <span class="math">N</span> is the population and <span class="math">i</span> is a guess at the number of people who are contagious and not staying home.
+        I have set <span class="math">i = C c<sub>7</sub></span>, where <span class="math">c<sub>7</sub></span> is the number of new cases in the last week.
         My assumption here is that the circulating contagious people are mostly those who are about to develop symptoms, and that anyone who has tested positive is quarantined.
-        I made <i>C = 2</i> as a somewhat random guess.
+        I made <span class="math">C = 2</span> as a somewhat random guess.
         It's greater than one to account for undetected cases.
-        Another thing that affects <i>C</i> is under-testing.
+        Another thing that affects <span class="math">C</span> is under-testing.
       </p>
       <h3>How to use this?</h3>
       <p>
@@ -51,10 +52,10 @@
         Will everyone be singing?
       </p>
       <p>
-        Make <i>C</i> bigger or smaller based on whether you think the last week's new case count is close to accurate (1) or too small (&gt;=2).
+        Make <span class="math">C</span> bigger or smaller based on whether you think the last week's new case count is close to accurate (1) or too small (&gt;=2).
       </p>
       <p>
-        Make <i>P<sub>n</sub></i> the percent probability you're comfortable with, and it'll show you the maximum group size you should be in.
+        Make <span class="math">P<sub>n</sub></span> the percent probability you're comfortable with, and it'll show you the maximum group size you should be in.
         The default is 5% (one in twenty chance of a COVID-19+ individual at an event).
       </p>
     </section>

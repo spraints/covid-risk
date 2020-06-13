@@ -33,16 +33,15 @@ export async function render(country: Country | null, province: Province | null,
     const model = new Model(data.cases, data.population)
 
     graph.innerHTML =
-      `<h4>${data.name}</h4>` +
-      `<p>Population: ${data.population}</p>` +
-      `<p>Cases: ${model.last[1]} as of ${model.last[0]}</p>` +
-      `<p>Last week: ${model.lastWeekCount} since ${model.previous[0]}</p>` +
-      `<ul>` +
-      `<li>P<sub>10</sub> = ${fmtPct(model.p(10))}</li>` +
-      `<li>P<sub>100</sub> = ${fmtPct(model.p(100))}</li>` +
-      `<li>P<sub>1000</sub> = ${fmtPct(model.p(1000))}</li>` +
-      `</ul>` +
-      `<p>when P<sub>n</sub> < 5%, n = ${model.n(0.05)}</p>`
+      factRow('Population', data.population) +
+      factRow('Cases', model.last[1]) +
+      factRow('Last week', model.lastWeekCount) +
+      factRow('', `${model.previous[0]} - ${model.last[0]}`) +
+      '<br>' +
+      factRow(m('P<sub>10</sub>'), fmtPct(model.p(10))) +
+      factRow(m('P<sub>100</sub>'), fmtPct(model.p(100))) +
+      factRow(m('P<sub>1000</sub>'), fmtPct(model.p(1000))) +
+      factRow(`${m('n')}, when ${m('P<sub>n</sub>')} < 5%`, Math.round(model.n(0.05)))
   } else {
     const model = new Model(data.cases, 0)
 
@@ -56,6 +55,17 @@ export async function render(country: Country | null, province: Province | null,
   // TODO! d3!
 }
 
+function factRow(label: string, data: any): string {
+  return '<div class="row">' +
+    `<div class="col-2">${label}</div>` +
+    `<div class="col-4">${data}</div>` +
+  '</div>'
+}
+
+function m(expr: string): string {
+  return `<span class="math">${expr}</span>`
+}
+
 function fmtPct(p: number): string {
-  return `${100.0 * p} %`
+  return `${(100.0 * p).toFixed(2)} %`
 }
