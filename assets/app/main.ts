@@ -27,11 +27,14 @@ observe('.locations', locationDiv => {
     const provinceSel = locationDiv.querySelector('.js-province') as HTMLSelectElement
     const countySel = locationDiv.querySelector('.js-county') as HTMLSelectElement
 
-    const country = buildLocationOptions<Country>(countrySel, locationData.countries, NULL_COUNTRY, countryName)
+    let country = null
+    let province = null
+    let county = null
+    country = buildLocationOptions<Country>(countrySel, locationData.countries, NULL_COUNTRY, countryName)
     if (country && country.provinces) {
-      const province = buildLocationOptions<Province>(provinceSel, country.provinces, NULL_PROVINCE, provinceName)
+      province = buildLocationOptions<Province>(provinceSel, country.provinces, NULL_PROVINCE, provinceName)
       if (province && province.counties) {
-        buildLocationOptions<County>(countySel, province.counties, NULL_COUNTY, countyName)
+        county = buildLocationOptions<County>(countySel, province.counties, NULL_COUNTY, countyName)
       } else {
         countySel.hidden = true
       }
@@ -39,6 +42,7 @@ observe('.locations', locationDiv => {
       provinceSel.hidden = true
       countySel.hidden = true
     }
+    render(country, province, county)
   })
 })
 
