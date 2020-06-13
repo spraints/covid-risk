@@ -35,14 +35,15 @@ export async function render(country: Country | null, province: Province | null,
     const pn = getPn()
     graph.innerHTML =
       factRow('Population', data.population) +
-      factRow('Cases', `${model.last[1]} as of ${model.last[0]}`) +
-      factRow('Last week', `${model.lastWeekCount} since ${model.previous[0]}`) +
+      factRow('Cases', model.last[1], `as of ${model.last[0]}`) +
+      factRow('Last week', model.lastWeekCount, `since ${model.previous[0]}`) +
       '<br>' +
-      factRow(m('P<sub>1</sub>'), fmtPct(model.p(1))) +
-      factRow(m('P<sub>10</sub>'), fmtPct(model.p(10))) +
-      factRow(m('P<sub>100</sub>'), fmtPct(model.p(100))) +
-      factRow(m('P<sub>1000</sub>'), fmtPct(model.p(1000))) +
-      factRow(`${m('n')}, when ${m('P<sub>n</sub>')} < ${pn}%`, Math.round(model.n(pn/100.0)))
+      pctRow(m('P<sub>1</sub>'), model.p(1)) +
+      pctRow(m('P<sub>10</sub>'), model.p(10)) +
+      pctRow(m('P<sub>100</sub>'), model.p(100)) +
+      pctRow(m('P<sub>1000</sub>'), model.p(1000)) +
+      '<br>' +
+      factRow(`${m('n')} when ${m('P<sub>n</sub>')} < ${pn}%`, Math.round(model.n(pn/100.0)))
   } else {
     const model = new Model(data.cases, 0)
 
@@ -68,17 +69,18 @@ function getPn(): number {
   return 5
 }
 
-function factRow(label: string, data: any): string {
-  return '<div class="row">' +
-    `<div class="col-sm-2"><b>${label}</b></div>` +
-    `<div class="col-sm-6">${data}</div>` +
+function factRow(label: string, data: any, note?: string): string {
+  return '<div class="row fact">' +
+    `<div class="col-sm-2 fact-name">${label}</div>` +
+    `<div class="col-sm-2 fact-value">${data}</div>` +
+    (note ? `<div class="col-sm-8 fact-note">${note}</div>` : '') +
   '</div>'
+}
+
+function pctRow(label: string, p: number): string {
+  return factRow(label, `${(100.0 * p).toFixed(2)} %`)
 }
 
 function m(expr: string): string {
   return `<span class="math">${expr}</span>`
-}
-
-function fmtPct(p: number): string {
-  return `${(100.0 * p).toFixed(2)} %`
 }

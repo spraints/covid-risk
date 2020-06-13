@@ -11,3 +11,11 @@
   width: 3em;
   text-align: right;
 }
+
+.fact-name {
+  font-weight: bold;
+}
+
+.fact-value {
+  text-align: right;
+}
