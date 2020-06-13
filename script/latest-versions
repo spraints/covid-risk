@@ -1,0 +1,11 @@
+#!/bin/bash
+
+repos="
+  nytimes/covid-19-data
+  CSSEGISandData/COVID-19
+"
+
+for repo in $repos; do
+  printf '%s ' "$repo"
+  curl -s https://api.github.com/repos/$repo/git/refs/heads/master | jq -r .object.sha
+done
