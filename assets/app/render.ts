@@ -8,10 +8,10 @@ type Cases = {
 }
 
 export async function render(country: Country | null, province: Province | null, county: County | null) {
-  const graph = document.querySelector('.graph') as HTMLDivElement
+  const report = document.querySelector('.report') as HTMLDivElement
 
   if (!country) {
-    graph.innerText = ''
+    report.innerText = ''
     return
   }
 
@@ -33,7 +33,7 @@ export async function render(country: Country | null, province: Province | null,
     const model = new Model(data.cases, data.population, {c: getC()})
 
     const pn = getPn()
-    graph.innerHTML =
+    report.innerHTML =
       factRow('Population', data.population) +
       factRow('Cases', model.last[1], `as of ${model.last[0]}`) +
       factRow('Last week', model.lastWeekCount, `since ${model.previous[0]}`) +
@@ -47,11 +47,10 @@ export async function render(country: Country | null, province: Province | null,
   } else {
     const model = new Model(data.cases, 0)
 
-    graph.innerHTML =
-      `<h4>${data.name}</h4>` +
-      `<p>Population: not available</p>` +
-      `<p>Cases: ${model.last[1]} as of ${model.last[0]}</p>` +
-      `<p>Last week: ${model.lastWeekCount} since ${model.previous[0]}</p>`
+    report.innerHTML =
+      factRow('Population', 'not available') +
+      factRow('Cases', model.last[1], `as of ${model.last[0]}`) +
+      factRow('Last week', model.lastWeekCount, `since ${model.previous[0]}`)
   }
 
   // TODO! d3!
