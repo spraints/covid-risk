@@ -2,3 +2,12 @@
   font-style: italic;
   background-color: #eee;
 }
+
+.locations, .options {
+  margin-bottom: 1em;
+}
+
+.option input {
+  width: 3em;
+  text-align: right;
+}

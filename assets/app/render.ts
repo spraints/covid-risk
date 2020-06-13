@@ -35,9 +35,8 @@ export async function render(country: Country | null, province: Province | null,
     const pn = getPn()
     graph.innerHTML =
       factRow('Population', data.population) +
-      factRow('Cases', model.last[1]) +
-      factRow('Last week', model.lastWeekCount) +
-      factRow('', `${model.previous[0]} - ${model.last[0]}`) +
+      factRow('Cases', `${model.last[1]} as of ${model.last[0]}`) +
+      factRow('Last week', `${model.lastWeekCount} since ${model.previous[0]}`) +
       '<br>' +
       factRow(m('P<sub>1</sub>'), fmtPct(model.p(1))) +
       factRow(m('P<sub>10</sub>'), fmtPct(model.p(10))) +
@@ -71,8 +70,8 @@ function getPn(): number {
 
 function factRow(label: string, data: any): string {
   return '<div class="row">' +
-    `<div class="col-2">${label}</div>` +
-    `<div class="col-4">${data}</div>` +
+    `<div class="col-sm-2"><b>${label}</b></div>` +
+    `<div class="col-sm-6">${data}</div>` +
   '</div>'
 }
 
