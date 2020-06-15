@@ -29,6 +29,9 @@ COPY assets           assets
 
 RUN npm run tsc && npm run build-js
 
+COPY script/link-assets script/link-assets
+RUN bash script/link-assets
+
 ####################
 FROM nginx:1.19
 

@@ -1,0 +1,11 @@
+#!/bin/bash
+
+# only works correctly the first time.
+
+for f in public/assets/*.js; do
+  dst=$(dirname $f)/$(basename $f | cut -d - -f 1).$(basename $f | cut -d . -f 2)
+  (set -xe
+  rm -f $dst
+  ln -s $(basename $f) $dst
+  )
+done
