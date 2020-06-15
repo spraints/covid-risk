@@ -39,3 +39,6 @@ COPY               public           /usr/share/nginx/html
 COPY --from=assets /src/public      /usr/share/nginx/html
 COPY --from=data   /src/public/data /usr/share/nginx/html/data
 COPY --from=data   /src/version     /usr/share/nginx/html/data/version
+
+COPY script/bust-js-cache /tmp/bust-js-cache
+RUN bash /tmp/bust-js-cache /usr/share/nginx/html/index.html app.js

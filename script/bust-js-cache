@@ -1,0 +1,15 @@
+#!/bin/bash
+#/ Usage: script/bust-js-cache HTMLPATH ASSETFILE
+
+set -e
+set -o nounset
+
+HTMLPATH=$1
+ASSETFILE=$2
+
+ASSETDIR=$(dirname $HTMLPATH)/assets
+ASSETPATH=$ASSETDIR/$ASSETFILE
+RESOLVED=$(readlink $ASSETPATH)
+
+set -x
+sed -i -e "s@$ASSETFILE@$RESOLVED@" $HTMLPATH
