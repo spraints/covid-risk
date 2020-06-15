@@ -4,9 +4,12 @@ import clear from './clear'
 
 // see https://github.com/Lemoncode/d3js-typescript-examples
 
-export function renderRGraph(el: Element, data: Cases) {
+export function renderRGraph(el: HTMLElement | null, data: Cases) {
+  if (!el) return
+  el.hidden = true
   clear(el)
   el.append(makeSVG(convert(data)) as Node)
+  el.hidden = false
 }
 
 type Point = {
@@ -21,13 +24,21 @@ const yaxislabel = "New cases in the last week"
 
 function convert(data: Cases): Point[] {
   const res: Point[] = []
+  const labelMod = (data.cases.length - 1) % 7
+  let lastDiff = 0
   for (let i = 7; i < data.cases.length; i++) {
-    res.push({
-      orient: "left",
-      name: data.cases[i][0],
-      x: data.cases[i][1],
-      y: data.cases[i][1] - data.cases[i-7][1]
-    })
+    const cum = data.cases[i][1]
+    const diff = data.cases[i][1] - data.cases[i-7][1]
+    if (cum > 0 && diff > 0) {
+      // Alternatively, push undefined 'y' values. tsc doesn't like it, though.
+      res.push({
+        orient: diff > lastDiff ? "left" : "right",
+        name: i % 7 == labelMod ? data.cases[i][0] : '',
+        x: cum,
+        y: diff
+      })
+    }
+    lastDiff = diff
   }
   return res
 }

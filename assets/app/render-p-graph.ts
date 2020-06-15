@@ -5,9 +5,12 @@ import clear from './clear'
 
 // see https://github.com/Lemoncode/d3js-typescript-examples
 
-export function renderPGraph(el: Element, data: Cases, model: Model) {
+export function renderPGraph(el: HTMLElement | null, data: Cases, model: Model) {
+  if (!el) return
+  el.hidden = true
   clear(el)
   el.append(makeSVG(convert(model)) as Node)
+  el.hidden = false
 }
 
 type Point = {
@@ -123,14 +126,14 @@ function makeLine(x: any, y: any) {
 }
 
 function makeX(data: Point[]) {
-  return d3.scaleLinear()
+  return d3.scaleLog()
     .domain(d3.extent<Point, number>(data, d => d.x) as [number, number]).nice()
     .range([margin.left, width - margin.right])
 }
 
 function makeY(data: Point[]) {
   return d3.scaleLinear()
-    .domain(d3.extent<Point, number>(data, d => d.y) as [number, number]).nice()
+    .domain([0, 50])
     .range([height - margin.bottom, margin.top])
 }
 

@@ -26,7 +26,7 @@ export async function render(country: Country | null, province: Province | null,
   if (!response.ok) throw new Error('error getting ' + url)
   const data: Cases = await response.json()
 
-  renderRGraph(document.querySelector('.r-graph')!, data)
+  renderRGraph(document.querySelector('.r-graph') as HTMLElement, data)
 
   if (data.population) {
     const model = new Model(data.cases, data.population, {c: getC()})
@@ -47,7 +47,7 @@ export async function render(country: Country | null, province: Province | null,
     if (model.p(1) == 0) {
       hidePGraph()
     } else {
-      renderPGraph(document.querySelector('.p-graph')!, data, model)
+      renderPGraph(document.querySelector('.p-graph') as HTMLElement, data, model)
     }
   } else {
     const model = new Model(data.cases, 0)
