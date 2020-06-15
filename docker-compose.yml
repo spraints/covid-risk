@@ -6,7 +6,7 @@ services:
       context: .
       args:
         # bump this to force new data
-        - CACHE_VERSION=0
+        - "CACHE_VERSION=${CACHE_VERSION:-0}"
     volumes:
       - ./public:/usr/share/nginx/html
     ports:
