@@ -127,7 +127,7 @@ function makeLine(x: any, y: any) {
 
 function makeX(data: Point[]) {
   return d3.scaleLog()
-    .domain(d3.extent<Point, number>(data, d => d.x) as [number, number]).nice()
+    .domain([1, 10000])
     .range([margin.left, width - margin.right])
 }
 
