@@ -25,20 +25,19 @@ const yaxislabel = "New cases in the last week"
 function convert(data: Cases): Point[] {
   const res: Point[] = []
   const labelMod = (data.cases.length - 1) % 7
-  let lastDiff = 0
+  const mid = data.cases.length / 2
   for (let i = 7; i < data.cases.length; i++) {
     const cum = data.cases[i][1]
     const diff = data.cases[i][1] - data.cases[i-7][1]
     if (cum > 0 && diff > 0) {
       // Alternatively, push undefined 'y' values. tsc doesn't like it, though.
       res.push({
-        orient: diff > lastDiff ? "left" : "right",
+        orient: i < mid ? "left" : "right",
         name: i % 7 == labelMod ? data.cases[i][0] : '',
         x: cum,
         y: diff
       })
     }
-    lastDiff = diff
   }
   return res
 }
