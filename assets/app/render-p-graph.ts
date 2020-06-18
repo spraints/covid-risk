@@ -14,8 +14,6 @@ export function renderPGraph(el: HTMLElement | null, data: Cases, model: Model) 
 }
 
 type Point = {
-  orient: string
-  name: string
   x: number
   y: number
 }
@@ -27,7 +25,7 @@ function convert(model: Model): Point[] {
   const res: Point[] = []
   for (let n = 1; n < 1000000; n *= 2) {
     const p = model.p(n)
-    res.push({orient: "left", name: "", x: n, y: 100 * p})
+    res.push({x: n, y: 100 * p})
     if (p > 0.99) {
       break
     }
@@ -62,12 +60,7 @@ function makeSVG(data: Point[]) {
       .attr("stroke-width", 2.5)
       .attr("stroke-linejoin", "round")
       .attr("stroke-linecap", "round")
-      .attr("stroke-dasharray", `0,${l}`)
       .attr("d", line)
-    .transition()
-      .duration(5000)
-      .ease(d3.easeLinear)
-      .attr("stroke-dasharray", `${l},${l}`);
 
   svg.append("g")
       .attr("fill", "white")
@@ -79,32 +72,6 @@ function makeSVG(data: Point[]) {
       .attr("cx", d => x(d.x))
       .attr("cy", d => y(d.y))
       .attr("r", 3);
-
-  const label = svg.append("g")
-      .attr("font-family", "sans-serif")
-      .attr("font-size", 10)
-    .selectAll("g")
-    .data(data)
-    .join("g")
-      .attr("transform", d => `translate(${x(d.x)},${y(d.y)})`)
-      .attr("opacity", 0);
-
-  label.append("text")
-      .text(d => d.name)
-      .each(function(d) {
-        const t = d3.select(this);
-        switch (d.orient) {
-          case "top": t.attr("text-anchor", "middle").attr("dy", "-0.7em"); break;
-          case "right": t.attr("dx", "0.5em").attr("dy", "0.32em").attr("text-anchor", "start"); break;
-          case "bottom": t.attr("text-anchor", "middle").attr("dy", "1.4em"); break;
-          case "left": t.attr("dx", "-0.5em").attr("dy", "0.32em").attr("text-anchor", "end"); break;
-        }
-      })
-      .call(halo);
-
-  label.transition()
-      .delay((d, i) => length(line(data.slice(0, i + 1))) / l * (5000 - 125))
-      .attr("opacity", 1);
 
   return svg.node();
 }
