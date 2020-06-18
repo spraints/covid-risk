@@ -4,6 +4,8 @@ import {Model} from './model'
 import {renderRGraph} from './render-r-graph'
 import {renderPGraph} from './render-p-graph'
 
+let lastFetch: AbortController | null = null
+
 export async function render(country: Country | null, province: Province | null, county: County | null) {
   const report = document.querySelector('.report') as HTMLDivElement
 
@@ -22,7 +24,11 @@ export async function render(country: Country | null, province: Province | null,
   //url = url + '.json?' + Math.floor(Date.now() / 3600 / 1000)
   url = url + '.json?' + Date.now()
 
-  const response = await fetch(url)
+  lastFetch?.abort()
+  const {signal} = (lastFetch = new AbortController())
+
+  const response = await fetch(url, {signal})
+  if (signal.aborted) return // but maybe it will already have thrown?
   if (!response.ok) throw new Error('error getting ' + url)
   const data: Cases = await response.json()
 
