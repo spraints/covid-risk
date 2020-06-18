@@ -8,7 +8,7 @@ export function renderRGraph(el: HTMLElement | null, data: Cases) {
   if (!el) return
   el.hidden = true
   clear(el)
-  el.append(makeSVG(convert(data)) as Node)
+  el.append(makeSVG(convert(data), !!data.population) as Node)
   el.hidden = false
 }
 
@@ -22,27 +22,78 @@ type Point = {
 const xaxislabel = "Cumulative cases"
 const yaxislabel = "New cases in the last week"
 
+const xaxislabelpct = "Cumulative percent of population tested positive"
+const yaxislabelpct = "Percent of population tested positive in last week"
+
 function convert(data: Cases): Point[] {
+  const scale = makeConvertScale(data.population)
+  const label = makeConvertLabel(data, scale)
+  const orient = makeConvertOrient(data)
+
   const res: Point[] = []
-  const labelMod = (data.cases.length - 1) % 7
-  const mid = data.cases.length / 2
+
   for (let i = 7; i < data.cases.length; i++) {
-    const cum = data.cases[i][1]
+    const cumulative = data.cases[i][1]
     const diff = data.cases[i][1] - data.cases[i-7][1]
-    if (cum > 0 && diff > 0) {
+    if (cumulative > 0 && diff > 0) {
       // Alternatively, push undefined 'y' values. tsc doesn't like it, though.
       res.push({
-        orient: i < mid ? "left" : "right",
-        name: i % 7 == labelMod ? data.cases[i][0] : '',
-        x: cum,
-        y: diff
+        orient: orient(i),
+        name: label(i, data.cases[i][0], diff, cumulative),
+        x: scale(cumulative),
+        y: scale(diff)
       })
     }
   }
   return res
 }
 
-function makeSVG(data: Point[]) {
+type ConvertScale = (n: number) => number
+type ConvertLabel = (i: number, date: string, diff: number, cumulative: number) => string
+type ConvertOrient = (i: number) => "left" | "right"
+
+function makeConvertScale(population: number | null | undefined): ConvertScale {
+  if (population) {
+    return (n) => 100 * n / population
+  }
+  return (n) => n
+}
+
+function makeConvertLabel(data: Cases, scale: ConvertScale): ConvertLabel {
+  const labelMod = (data.cases.length - 1) % 7
+  if (data.population) {
+    return (i: number, date: string, diff: number, cumulative: number) => {
+      if (i == (data.cases.length - 1)) {
+        const fmt = d3.format('f')
+        const diffPct = fmt(scale(diff))
+        const cumulativePct = fmt(scale(cumulative))
+        return `${date} (new = ${diffPct} %, cumulative = ${cumulativePct} %)`
+      }
+      if (i % 7 == labelMod) {
+        return date
+      }
+      return ""
+    }
+  } else {
+    return (i: number, date: string, _diff: number, _cumulative: number) => {
+      if (i % 7 == labelMod) {
+        return date
+      }
+      return ""
+    }
+  }
+}
+
+function makeConvertOrient(data: Cases): ConvertOrient {
+  const mid = data.cases.length / 2
+  if (data.population) {
+    const last = data.cases.length - 1
+    return (i: number) => (i == last || i < mid) ? "left" : "right"
+  }
+  return (i: number) => i < mid ? "left" : "right"
+}
+
+function makeSVG(data: Point[], hasPopulation: boolean) {
   const svg = d3.create("svg")
       .attr("viewBox", `0 0 ${width} ${height}`);
 
@@ -51,8 +102,8 @@ function makeSVG(data: Point[]) {
 
   const line = makeLine(x, y)
 
-  const xAxis = makeXAxis(data, x)
-  const yAxis = makeYAxis(data, y)
+  const xAxis = makeXAxis(data, x, hasPopulation)
+  const yAxis = makeYAxis(data, y, hasPopulation)
 
   const l = length(line(data));
 
@@ -144,11 +195,11 @@ function makeY(data: Point[]) {
     .range([height - margin.bottom, margin.top])
 }
 
-function makeXAxis(data: Point[], x: any) {
+function makeXAxis(data: Point[], x: any, hasPopulation: boolean) {
   return function(g: any) {
     return g
       .attr("transform", `translate(0,${height - margin.bottom})`)
-      .call(d3.axisBottom(x).ticks(null, "d"))
+      .call(d3.axisBottom(x).ticks(null, hasPopulation ? ".1e" : "d"))
       .call((g: any) => g.select(".domain").remove())
       .call((g: any) => g.selectAll(".tick line").clone()
                 .attr("y2", -height)
@@ -159,16 +210,16 @@ function makeXAxis(data: Point[], x: any) {
                 .attr("font-weight", "bold")
                 .attr("text-anchor", "end")
                 .attr("fill", "black")
-                .text(xaxislabel)
+                .text(hasPopulation ? xaxislabelpct : xaxislabel)
                 .call(halo))
   }
 }
 
-function makeYAxis(data: Point[], y: any) {
+function makeYAxis(data: Point[], y: any, hasPopulation: boolean) {
   return function(g: any) {
     return g
       .attr("transform", `translate(${margin.left},0)`)
-      .call(d3.axisLeft(y).ticks(null, "d"))
+      .call(d3.axisLeft(y).ticks(null, hasPopulation ? ".1e" : "d"))
       .call((g: any) => g.select(".domain").remove())
       .call((g: any) => g.selectAll(".tick line").clone()
                 .attr("x2", width)
@@ -178,7 +229,7 @@ function makeYAxis(data: Point[], y: any) {
                 .attr("text-anchor", "start")
                 .attr("font-weight", "bold")
                 .attr("fill", "black")
-                .text(yaxislabel)
+                .text(hasPopulation ? yaxislabelpct : yaxislabel)
                 .call(halo))
   }
 }
