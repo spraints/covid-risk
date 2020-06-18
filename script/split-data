@@ -107,6 +107,15 @@ class Populations
     end
   end
 
+  # https://en.wikipedia.org/wiki/List_of_counties_in_New_York
+  NYC = [
+    "36061", # New York County
+    "36047", # Kings County
+    "36005", # Bronx County
+    "36081", # Richmond County
+    "36085", # Queens County
+  ]
+
   def get_us(state, county)
     @uspop = 0
     @fipspops ||= _read_csv("pop_est_2019.csv").each_with_object(Hash.new(0)) { |row, res|
@@ -118,6 +127,8 @@ class Populations
     if county
       if county.name == "Unknown"
         0
+      elsif state.fips == "36" && county.name == "New York City"
+        NYC.map { |f| @fipspops.fetch(f) }.inject(&:+)
       else
         @fipspops.fetch(county.fips) {
           w "WARNING: No population data for #{state.name} (#{state.fips}) / #{county.name} (#{county.fips})"
