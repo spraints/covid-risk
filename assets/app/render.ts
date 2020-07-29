@@ -21,8 +21,8 @@ export async function render(country: Country | null, province: Province | null,
       url = url + '/' + county.name
     }
   }
-  //url = url + '.json?' + Math.floor(Date.now() / 3600 / 1000)
-  url = url + '.json?' + Date.now()
+  // refresh up to once an hour
+  url = url + '.json?' + Math.floor(Date.now() / 3600 / 1000)
 
   lastFetch?.abort()
   const {signal} = (lastFetch = new AbortController())
