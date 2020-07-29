@@ -1,11 +1,19 @@
-#!/bin/bash
+#!/usr/bin/env ruby
 
-repos="
+require "digest"
+require "json"
+require "net/http"
+
+repos = %w[
   nytimes/covid-19-data
   CSSEGISandData/COVID-19
-"
+]
 
-for repo in $repos; do
-  printf '%s ' "$repo"
-  curl -s https://api.github.com/repos/$repo/git/refs/heads/master | jq -r .object.sha
-done
+sources = repos.map do |repo|
+  v = JSON.parse(Net::HTTP::get(URI("https://api.github.com/repos/#{repo}/git/refs/heads/master")))
+  "https://github.com/#{repo}/tree/#{v.dig("object", "sha")}"
+end
+
+sha256 = Digest::SHA256.hexdigest(JSON.dump(sources))
+
+puts JSON.dump("v" => sha256, "sources" => sources)

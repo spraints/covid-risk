@@ -19,6 +19,8 @@ const NULL_COUNTRY = 'choose country'
 const NULL_PROVINCE = 'all provinces'
 const NULL_COUNTY = 'all counties'
 
+var version: String | null = null
+
 observe('.js-version', versionEl => {
   showVersion(versionEl as HTMLElement)
 })
@@ -46,7 +48,7 @@ observe('.locations', locationDiv => {
       provinceSel.hidden = true
       countySel.hidden = true
     }
-    render(country, province, county)
+    render(country, province, county, version)
   })
 })
 
@@ -60,7 +62,7 @@ on('change', '.js-country', (e) => {
     countySel.hidden = true
 
     const country = findLocation<Country>(locationData.countries, countrySel.value)
-    render(country, null, null)
+    render(country, null, null, version)
     selectionStore.setPlace([country?.name])
 
     if (!country) return
@@ -82,7 +84,7 @@ on('change', '.js-province', (e) => {
 
     const country = findLocation<Country>(locationData.countries, countrySel.value)
     const province = findLocation<Province>(country!.provinces!, provinceSel.value)
-    render(country, province, null)
+    render(country, province, null, version)
     selectionStore.setPlace([country!.name, province?.name])
 
     if (!province) return
@@ -103,7 +105,7 @@ on('change', '.js-county', (e) => {
     const country = findLocation<Country>(locationData.countries, countrySel.value)
     const province = findLocation<Province>(country!.provinces!, provinceSel.value)
     const county = findLocation<County>(province!.counties!, countySel.value)
-    render(country, province, county)
+    render(country, province, county, version)
     selectionStore.setPlace([country!.name, province!.name, county?.name])
   })
 })
@@ -126,7 +128,7 @@ on('change', '.js-rerender', () => {
       }
     }
 
-    render(country, province, county)
+    render(country, province, county, version)
   })
 })
 
@@ -169,7 +171,13 @@ function showOpts(selSelector: string, optSelector: string) {
 async function showVersion(versionEl: HTMLElement) {
   const response = await fetch('/data/version')
   if (response.ok) {
-    versionEl.innerText = await response.text()
+    const data = await response.json()
+    let vstr = 'sources'
+    for (const source of data.sources) {
+      vstr = `${vstr} <a href="${source}">${source}</a>`
+    }
+    versionEl.innerHTML = vstr
+    version = data.v
   }
 }
 

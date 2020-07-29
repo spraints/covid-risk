@@ -6,7 +6,7 @@ import {renderPGraph} from './render-p-graph'
 
 let lastFetch: AbortController | null = null
 
-export async function render(country: Country | null, province: Province | null, county: County | null) {
+export async function render(country: Country | null, province: Province | null, county: County | null, version: String | null) {
   const report = document.querySelector('.report') as HTMLDivElement
 
   if (!country) {
@@ -22,7 +22,12 @@ export async function render(country: Country | null, province: Province | null,
     }
   }
   // refresh up to once an hour
-  url = url + '.json?' + Math.floor(Date.now() / 3600 / 1000)
+  url = url + '.json?_='
+  if (version) {
+    url = url + version
+  } else {
+    url = url + Date.now()
+  }
 
   lastFetch?.abort()
   const {signal} = (lastFetch = new AbortController())
