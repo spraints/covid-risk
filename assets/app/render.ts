@@ -6,7 +6,7 @@ import {renderPGraph} from './render-p-graph'
 
 let lastFetch: AbortController | null = null
 
-export async function render(country: Country | null, province: Province | null, county: County | null, version: String | null) {
+export async function renderCases(country: Country | null, province: Province | null, county: County | null, version: String | null) {
   const report = document.querySelector('.report') as HTMLDivElement
 
   if (!country) {

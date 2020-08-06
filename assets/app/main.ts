@@ -3,11 +3,14 @@ import {on} from 'delegated-events'
 
 import {Country, Province, County} from './locations'
 import {SelectionStore} from './selection-store'
-import {render} from './render'
+import {renderCases} from './render'
 
 type LocationData = {
   countries: Country[]
 }
+
+type RenderFunc =
+  (c: Country | null, p: Province | null, y: County | null, v: String | null) => void
 
 interface Named {
   name: string
@@ -21,8 +24,18 @@ const NULL_COUNTY = 'all counties'
 
 var version: String | null = null
 
+var render: RenderFunc = renderCases
+
+function renderDeaths(c: Country | null, p: Province | null, y: County | null, v: String | null) {
+  console.log(["todo: deaths", c, p, y, v])
+}
+
 observe('.js-version', versionEl => {
   showVersion(versionEl as HTMLElement)
+})
+
+observe('meta[name=analysis-mode]', metaEl => {
+  render = renderDeaths
 })
 
 observe('.locations', locationDiv => {

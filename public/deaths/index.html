@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>Will I meet someone with COVID-19?</title>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.0/css/bootstrap.min.css" integrity="sha384-9aIt2nRpC12Uk9gS9baDl411NQApFmC26EwAOH8WgZl5MYYxFfc+NcPb1dKGj7Sk" crossorigin="anonymous">
+    <link rel="stylesheet" href="/app.css?1">
+    <meta name="analysis-mode" content="deaths">
+  </head>
+  <body>
+    <section class="container">
+      <h3>What can we learn from death statistics?</h3>
+      <div class="row locations">
+        <div class="col-md-4"><select class="js-country"></select></div>
+        <div class="col-md-4"><select class="js-province"></select></div>
+        <div class="col-md-4"><select class="js-county"></select></div>
+      </div>
+      <div class="options">
+        <div class="row option">
+          <div class="col-2"><label for="option-c"><span class="math">C</span></label></div>
+          <div class="col-10"><input class="js-c js-rerender" id="option-c" type="number" min="0.1" step="0.1" value="2"></div>
+        </div>
+        <div class="row option">
+          <div class="col-2"><label for="option-pn"><span class="math">P<sub>n</sub></span></label></div>
+          <div class="col-10"><input class="js-pn js-rerender" id="option-pn" type="number" min="0" step="1" value="5"> %</div>
+        </div>
+      </div>
+      <div class="report">
+      </div>
+      <div class="p-graph">
+        <!-- x: n, y: pn -->
+      </div>
+      <div class="r-graph">
+        <!-- x: cumulative count, y: new deaths in last week -->
+      </div>
+    </section>
+    <section class="container">
+      <p><a href="/deaths/">Switch to cases</a></p>
+    </section>
+    <section class="container">
+      <p class="js-version"></p>
+    </section>
+    <script src="/assets/app.js?7"></script>
+  </body>
+</html>
