@@ -19,3 +19,28 @@
 .fact-value {
   text-align: right;
 }
+
+.summary {
+  padding-top: 0.5em;
+  padding-bottom: 1em;
+  font-size: 1.25rem;
+}
+
+.summary-location {
+  font-weight: bold;
+  color: blue;
+}
+
+.summary-count {
+  font-weight: bold;
+  color: orange;
+}
+
+.summary-count input {
+  width: 4em;
+}
+
+.summary-percent {
+  font-weight: bold;
+  color: red;
+}

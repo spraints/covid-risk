@@ -6,8 +6,11 @@ import {renderPGraph} from './render-p-graph'
 
 let lastFetch: AbortController | null = null
 
+const INITIAL_SUMMARY_POPULATION_SIZE = 20
+
 export async function render(country: Country | null, province: Province | null, county: County | null, version: String | null) {
   const report = document.querySelector('.report') as HTMLDivElement
+  const summary = document.querySelector('.summary') as HTMLDivElement
 
   if (!country) {
     report.innerText = ''
@@ -57,8 +60,10 @@ export async function render(country: Country | null, province: Province | null,
 
     if (model.p(1) == 0) {
       hidePGraph()
+      hideSummary(summary)
     } else {
       renderPGraph(document.querySelector('.p-graph') as HTMLElement, data, model)
+      renderSummary(summary, county || province || country, model)
     }
   } else {
     const model = new Model(data.cases, 0)
@@ -69,12 +74,41 @@ export async function render(country: Country | null, province: Province | null,
       factRow('Last week', model.lastWeekCount, `since ${model.previous[0]}`)
 
     hidePGraph()
+    hideSummary(summary)
   }
 }
 
 function hidePGraph() {
   const el = document.querySelector('.p-graph') as HTMLElement
   if (el) el.hidden = true
+}
+
+function hideSummary(el: HTMLDivElement | null) {
+  if (el) el.hidden = true
+}
+
+function renderSummary(el: HTMLDivElement | null, place: Country | Province | County, model: Model) {
+  if (!el) return
+
+  let count = INITIAL_SUMMARY_POPULATION_SIZE
+  const countEl = el.querySelector('.summary-count') as HTMLElement
+  if (countEl) {
+    const countCount = parseInt(countEl.dataset['count'] || '')
+    if (!isNaN(countCount)) count = countCount
+  }
+
+  function setText(selector: string , text: string) {
+    if (el) {
+      const child = el.querySelector(selector) as HTMLElement
+      child.innerText = text
+    }
+  }
+
+  setText('.summary-location', place.name)
+  setText('.summary-count', `${count}`)
+  setText('.summary-percent', pct(model.p(count)))
+
+  el.hidden = false
 }
 
 function getC(): number {
@@ -98,7 +132,11 @@ function factRow(label: string, data: any, note?: string): string {
 }
 
 function pctRow(label: string, p: number): string {
-  return factRow(label, `${(100.0 * p).toFixed(2)} %`)
+  return factRow(label, pct(p))
+}
+
+function pct(p: number): string {
+  return `${(100.0 * p).toFixed(2)} %`
 }
 
 function m(expr: string): string {
