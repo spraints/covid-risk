@@ -52,6 +52,26 @@ observe('.locations', locationDiv => {
   })
 })
 
+on('click', '.summary-count', (e) => {
+  const el = e.currentTarget as HTMLElement
+  if (!el.querySelector('input')) {
+    el.innerHTML = `<input type="number" value="${el.innerText}">`
+    const input = el.querySelector('input') as HTMLInputElement
+    if (input) {
+      input.focus()
+      input.onchange = function() {
+        console.log("UPDATE COUNT")
+        el.dataset['count'] = input.value
+        rerender()
+      }
+      input.onblur = function() {
+        console.log("COUNT UPDATE FINISHED")
+        el.innerText = input.value
+      }
+    }
+  }
+})
+
 on('change', '.js-country', (e) => {
   const countrySel = e.currentTarget as HTMLSelectElement
   locationDataPromise.then(locationData => {
@@ -111,6 +131,10 @@ on('change', '.js-county', (e) => {
 })
 
 on('change', '.js-rerender', () => {
+  rerender()
+})
+
+function rerender() {
   locationDataPromise.then(locationData => {
     const countrySel = document.querySelector('.js-country') as HTMLSelectElement
     const provinceSel = document.querySelector('.js-province') as HTMLSelectElement
@@ -130,7 +154,7 @@ on('change', '.js-rerender', () => {
 
     render(country, province, county, version)
   })
-})
+}
 
 function findLocation<T extends Named>(locations: T[], name: string): T | null {
   if (name === '') return null
