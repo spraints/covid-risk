@@ -25,7 +25,7 @@ function yaxislabel(n: number) {
 }
 
 const WIDTH = 500
-const HEIGHT = 500
+const HEIGHT = 250
 const MARGIN = {top: 20, right: 30, bottom: 30, left: 40}
 
 const DAYS_TO_GRAPH = 180

@@ -168,7 +168,7 @@ function makeSVG(data: Point[], hasPopulation: boolean) {
 }
 
 const width = 500
-const height = 500
+const height = 400
 const margin = {top: 20, right: 30, bottom: 30, left: 40}
 
 function length(path: any) {
