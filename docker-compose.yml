@@ -1,12 +1,15 @@
 version: '3.4'
 
+# Use this in dev.
+# 1. Run 'script/get-data' to fetch the raw data and 'script/split-data'
+#    to generate the data files this app uses. In dev, you should only
+#    need to do this once as the app will work fine with old data.
+# 2. Run 'script/build-assets' each time you change scripts in assets.
+# 3. Run 'docker-compose up' and open http://127.0.0.1:8070/.
+
 services:
   web:
-    build:
-      context: .
-      args:
-        # bump this to force new data
-        - "CACHE_VERSION=${CACHE_VERSION:-0}"
+    image: nginx:1.19
     volumes:
       - ./public:/usr/share/nginx/html
     ports:
