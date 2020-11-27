@@ -3,6 +3,7 @@ import {Country, Province, County} from './locations'
 import {Model} from './model'
 import {renderRGraph} from './render-r-graph'
 import {renderPGraph} from './render-p-graph'
+import {renderHistPGraph} from './render-hist-p-graph'
 
 let lastFetch: AbortController | null = null
 
@@ -60,9 +61,11 @@ export async function render(country: Country | null, province: Province | null,
 
     if (model.p(1) == 0) {
       hidePGraph()
+      hideHistPGraph()
       hideSummary(summary)
     } else {
       renderPGraph(document.querySelector('.p-graph') as HTMLElement, data, model)
+      renderHistPGraph(document.querySelector('.hist-p-graph') as HTMLElement, data, model, getSummaryCount())
       renderSummary(summary, county || province || country, model)
     }
   } else {
@@ -74,12 +77,18 @@ export async function render(country: Country | null, province: Province | null,
       factRow('Last week', model.lastWeekCount, `since ${model.previous[0]}`)
 
     hidePGraph()
+    hideHistPGraph()
     hideSummary(summary)
   }
 }
 
 function hidePGraph() {
   const el = document.querySelector('.p-graph') as HTMLElement
+  if (el) el.hidden = true
+}
+
+function hideHistPGraph() {
+  const el = document.querySelector('.hist-p-graph') as HTMLElement
   if (el) el.hidden = true
 }
 
@@ -90,12 +99,7 @@ function hideSummary(el: HTMLDivElement | null) {
 function renderSummary(el: HTMLDivElement | null, place: Country | Province | County, model: Model) {
   if (!el) return
 
-  let count = INITIAL_SUMMARY_POPULATION_SIZE
-  const countEl = el.querySelector('.summary-count') as HTMLElement
-  if (countEl) {
-    const countCount = parseInt(countEl.dataset['count'] || '')
-    if (!isNaN(countCount)) count = countCount
-  }
+  let count = getSummaryCount()
 
   function setText(selector: string , text: string) {
     if (el) {
@@ -114,13 +118,22 @@ function renderSummary(el: HTMLDivElement | null, place: Country | Province | Co
 function getC(): number {
   const el = document.querySelector('.js-c') as HTMLInputElement
   if (el) return parseFloat(el.value)
-  return 2
+  return 5
 }
 
 function getPn(): number {
   const el = document.querySelector('.js-pn') as HTMLInputElement
   if (el) return parseFloat(el.value)
-  return 5
+  return 50
+}
+
+function getSummaryCount(): number {
+  const el = document.querySelector('.summary-count') as HTMLElement
+  if (el) {
+    const count = parseInt(el.dataset['count'] || '')
+    if (!isNaN(count)) return count
+  }
+  return INITIAL_SUMMARY_POPULATION_SIZE
 }
 
 function factRow(label: string, data: any, note?: string): string {
