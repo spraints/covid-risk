@@ -71,17 +71,6 @@ function makeSVG(data: Point[], groupSize: number) {
       .attr("stroke-linecap", "round")
       .attr("d", line)
 
-  svg.append("g")
-      .attr("fill", "white")
-      .attr("stroke", "black")
-      .attr("stroke-width", 2)
-    .selectAll("circle")
-    .data(data)
-    .join("circle")
-      .attr("cx", d => x(d.x))
-      .attr("cy", d => y(d.y))
-      .attr("r", 3);
-
   return svg.node();
 }
 
