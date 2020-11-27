@@ -1,20 +1,4 @@
 ####################
-FROM ruby:2.7.1 AS data
-
-RUN apt-get update && apt-get install -y curl ruby
-
-WORKDIR /src
-
-ARG CACHE_VERSION=0
-RUN echo $CACHE_VERSION > version
-
-COPY script/get-data script/get-data
-RUN script/get-data
-
-COPY script/split-data script/split-data
-RUN script/split-data
-
-####################
 FROM node:14.3.0 AS assets
 
 WORKDIR /src
@@ -31,6 +15,22 @@ RUN npm run tsc && npm run build-js
 
 COPY script/link-assets script/link-assets
 RUN bash script/link-assets
+
+####################
+FROM ruby:2.7.1 AS data
+
+RUN apt-get update && apt-get install -y curl ruby
+
+WORKDIR /src
+
+ARG CACHE_VERSION=0
+RUN echo $CACHE_VERSION > version
+
+COPY script/get-data script/get-data
+RUN script/get-data
+
+COPY script/split-data script/split-data
+RUN script/split-data
 
 ####################
 FROM nginx:1.19
