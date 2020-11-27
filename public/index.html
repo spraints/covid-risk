@@ -18,11 +18,11 @@
       <div class="options">
         <div class="row option">
           <div class="col-2"><label for="option-c"><span class="math">C</span></label></div>
-          <div class="col-10"><input class="js-c js-rerender" id="option-c" type="number" min="0.1" step="0.1" value="2"></div>
+          <div class="col-10"><input class="js-c js-rerender" id="option-c" type="number" min="0.1" step="0.1" value="10"></div>
         </div>
         <div class="row option">
           <div class="col-2"><label for="option-pn"><span class="math">P<sub>n</sub></span></label></div>
-          <div class="col-10"><input class="js-pn js-rerender" id="option-pn" type="number" min="0" step="1" value="5"> %</div>
+          <div class="col-10"><input class="js-pn js-rerender" id="option-pn" type="number" min="0" step="1" value="50"> %</div>
         </div>
       </div>
       <div class="summary">
@@ -56,9 +56,7 @@
         I've chosen to make it <span class="math">i / N</span>, where <span class="math">N</span> is the population and <span class="math">i</span> is a guess at the number of people who are contagious and not staying home.
         I have set <span class="math">i = C c<sub>7</sub></span>, where <span class="math">c<sub>7</sub></span> is the number of new cases in the last week.
         My assumption here is that the circulating contagious people are mostly those who are about to develop symptoms, and that anyone who has tested positive is quarantined.
-        I made <span class="math">C = 2</span> as a somewhat random guess.
-        It's greater than one to account for undetected cases.
-        Another thing that affects <span class="math">C</span> is under-testing.
+        I made <span class="math">C = 5</span> based on the ascertainment bias of the <a href="https://covid19risk.biosci.gatech.edu">Georgia Tech Risk Assessment Tool</a>
       </p>
       <h3>How to use this?</h3>
       <p>
