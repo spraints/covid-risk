@@ -1,4 +1,4 @@
-import {Cases, DateCount} from './types'
+import {Cases, DateCount, Deaths} from './types'
 import {Country, Province, County} from './locations'
 import {Model} from './model'
 import {renderRGraph} from './render-r-graph'
@@ -18,39 +18,31 @@ export async function render(country: Country | null, province: Province | null,
     return
   }
 
-  let url = `/data/cases/${country.name}`
-  if (province) {
-    url = url + '/' + province.name
-    if (county) {
-      url = url + '/' + county.name
-    }
-  }
-  // refresh up to once an hour
-  url = url + '.json?_='
-  if (version) {
-    url = url + version
-  } else {
-    url = url + Date.now()
-  }
-
   lastFetch?.abort()
   const {signal} = (lastFetch = new AbortController())
 
-  const response = await fetch(url, {signal})
+  const casesReq = fetchData('cases', country, province, county, version, signal)
+  const deathsReq = fetchData('deaths', country, province, county, version, signal)
+
+  const cases = await casesReq
   if (signal.aborted) return // but maybe it will already have thrown?
-  if (!response.ok) throw new Error('error getting ' + url)
-  const data: Cases = await response.json()
+  if (!cases.ok) throw new Error('error getting cases')
+  const casesData: Cases = await cases.json()
 
-  renderRGraph(document.querySelector('.r-graph') as HTMLElement, data)
+  const deaths = await deathsReq
+  if (signal.aborted) return // but maybe it will already have thrown?
 
-  if (data.population) {
-    const model = new Model(data.cases, data.population, {c: getC()})
+  renderRGraph(document.querySelector('.r-graph') as HTMLElement, casesData)
+
+  if (casesData.population) {
+    const model = new Model(casesData.cases, casesData.population, {c: getC()})
 
     const pn = getPn()
     report.innerHTML =
-      factRow('Population', data.population) +
-      factRow('Cases', model.last[1], `as of ${model.last[0]}`) +
-      factRow('Last week', model.lastWeekCount, `since ${model.previous[0]}`) +
+      factRow('Population', casesData.population) +
+      factRow('Cases, cumulative', model.last[1], `${pct(model.last[1] / casesData.population)} of population; as of ${model.last[0]}`) +
+      factRow('Cases, last week', model.lastWeekCount, `${pct(model.lastWeekCount / model.last[1])} of cases; since ${model.previous[0]}`) +
+      await summarizeDeaths(deaths, model) +
       '<br>' +
       pctRow(m('P<sub>1</sub>'), model.p(1)) +
       pctRow(m('P<sub>10</sub>'), model.p(10)) +
@@ -64,22 +56,55 @@ export async function render(country: Country | null, province: Province | null,
       hideHistPGraph()
       hideSummary(summary)
     } else {
-      renderPGraph(document.querySelector('.p-graph') as HTMLElement, data, model)
-      renderHistPGraph(document.querySelector('.hist-p-graph') as HTMLElement, data, model, getSummaryCount())
+      renderPGraph(document.querySelector('.p-graph') as HTMLElement, casesData, model)
+      renderHistPGraph(document.querySelector('.hist-p-graph') as HTMLElement, casesData, model, getSummaryCount())
       renderSummary(summary, county || province || country, model)
     }
   } else {
-    const model = new Model(data.cases, 0)
+    const model = new Model(casesData.cases, 0)
 
     report.innerHTML =
       factRow('Population', 'not available') +
-      factRow('Cases', model.last[1], `as of ${model.last[0]}`) +
-      factRow('Last week', model.lastWeekCount, `since ${model.previous[0]}`)
+      factRow('Cases, cumulative', model.last[1], `as of ${model.last[0]}`) +
+      factRow('Cases, last week', model.lastWeekCount, `${pct(model.lastWeekCount / model.last[1])} of cases; since ${model.previous[0]}`)
+      await summarizeDeaths(deaths, model) +
 
     hidePGraph()
     hideHistPGraph()
     hideSummary(summary)
   }
+}
+
+async function summarizeDeaths(deaths: Response, model: Model) {
+  if (!deaths.ok) {
+    return ''
+  }
+  const deathsData: Deaths = await deaths.json()
+  const totalDeaths = deathsData.deaths[deathsData.deaths.length - 1][1]
+  const totalCases = model.last[1]
+  if (deathsData.population) {
+    return factRow('Deaths, cumulative', totalDeaths, `${pct(totalDeaths / totalCases)} of cases; ${(100000 * totalDeaths / deathsData.population).toFixed(2)} per 100k people`)
+  } else {
+    return factRow('Deaths, cumulative', totalDeaths, `${pct(totalDeaths / totalCases)} of cases`)
+  }
+}
+
+async function fetchData(dataType: String, country: Country, province: Province | null, county: County | null, version: String | null, signal: AbortSignal) {
+  let url = `/data/${dataType}/${country.name}`
+  if (province) {
+    url = url + '/' + province.name
+    if (county) {
+      url = url + '/' + county.name
+    }
+  }
+  // refresh up to once an hour
+  url = url + '.json?_='
+  if (version) {
+    url = url + version
+  } else {
+    url = url + Date.now()
+  }
+  return fetch(url, {signal})
 }
 
 function hidePGraph() {
