@@ -23,14 +23,14 @@ RUN apt-get update && apt-get install -y curl ruby
 
 WORKDIR /src
 
-ARG CACHE_VERSION=0
+ARG CACHE_VERSION="{\"sources\": []}"
 RUN echo $CACHE_VERSION > version
 
 COPY script/get-data script/get-data
 RUN script/get-data
 
 COPY script/split-data script/split-data
-RUN script/split-data
+RUN script/split-data --lax
 
 ####################
 FROM nginx:1.19

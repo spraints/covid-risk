@@ -8,6 +8,7 @@ WHOLE_COUNTRY = "(whole country)"
 USA = "United States"
 
 def main
+  $strict = !ARGV.any? { |a| a == "--lax" }
   data_dir = File.expand_path("../data", File.dirname(__FILE__))
   out_dir = File.expand_path("../public/data", File.dirname(__FILE__))
   system "rm", "-rf", out_dir
@@ -33,6 +34,7 @@ class Outputs
   def write
     _write_locations
     _write_cases
+    _write_deaths
   end
 
   def _write_locations
@@ -68,8 +70,36 @@ class Outputs
     end
   end
 
-  def _counts(cases_by_date)
-    cases_by_date.sort_by(&:first).map { |date, count| [date.to_s, count] }
+  def _write_deaths
+    @countries.each do |_, country|
+      _write_json ["deaths", country.name],
+        name: country.name,
+        fips: country.fips,
+        population: @pop.get(country),
+        deaths: _counts(country.deaths_by_date)
+
+      next if country.children.keys == [WHOLE_COUNTRY]
+
+      country.children.each do |_, province|
+        _write_json ["deaths", country.name, province.name],
+          name: "#{province.name}, #{country.name}",
+          fips: province.fips,
+          population: @pop.get(country, province),
+          deaths: _counts(province.deaths_by_date)
+
+        province.children.each do |_, county|
+          _write_json ["deaths", country.name, province.name, county.name],
+            name: "#{county.name}, #{province.name}, #{country.name}",
+            fips: county.fips,
+            population: @pop.get(country, province, county),
+            deaths: _counts(county.deaths_by_date)
+        end
+      end
+    end
+  end
+
+  def _counts(counts_by_date)
+    counts_by_date.sort_by(&:first).map { |date, count| [date.to_s, count] }
   end
 
   def _localities(localities, key, *other_keys)
@@ -117,13 +147,15 @@ class Populations
   ]
 
   def get_us(state, county)
-    @uspop = 0
-    @fipspops ||= _read_csv("pop_est_2019.csv").each_with_object(Hash.new(0)) { |row, res|
-      pop = row["population"].to_i
-      res[row["fips"]] = pop
-      res[row["fips"][0,2]] += pop
-      @uspop += pop
-    }
+    if @uspop.nil? || @fipspops.nil?
+      @uspop = 0
+      @fipspops = _read_csv("pop_est_2019.csv").each_with_object(Hash.new(0)) { |row, res|
+        pop = row["population"].to_i
+        res[row["fips"]] = pop
+        res[row["fips"][0,2]] += pop
+        @uspop += pop
+      }
+    end
     if county
       if county.name == "Unknown"
         0
@@ -237,24 +269,48 @@ class USCountiesRow
 end
 
 def split_world(indir:, out:)
-  read_csv("time_series_covid19_confirmed_global.csv", dir: indir, row_type: WorldRow, out: out, progress: 30)
+  wwd = WorldWithDeaths.new
+  read_csv("time_series_covid19_deaths_global.csv", dir: indir, row_type: WorldRow, out: wwd, progress: 30)
+  read_csv("time_series_covid19_confirmed_global.csv", dir: indir, row_type: wwd, out: out, progress: 30)
+end
+
+class WorldWithDeaths
+  def initialize
+    @data = Hash.new { |h,k| h[k] = {} }
+  end
+
+  def update(date:, country:, province:, cases:, **)
+    @data[[country, province]][date] = cases
+  end
+
+  def new(row)
+    WorldRow.new(row, self)
+  end
+
+  def death_counts_for(country, province)
+    @data[[country, province || WHOLE_COUNTRY]]
+  end
 end
 
 class WorldRow
-  def initialize(row)
+  def initialize(row, wwd = nil)
     @row = row
+    @wwd = wwd
   end
 
   def update(out)
     country = @row["Country/Region"]
     province = @row["Province/State"]
+    death_counts = @wwd&.death_counts_for(country, province)
     return if country == "US"
     @row.headers[4..].each do |date|
+      dt = Dates.parse(date)
       out.update \
-        date: Dates.parse(date),
+        date: dt,
         country: country,
         province: province || WHOLE_COUNTRY,
-        cases: @row[date].to_i
+        cases: @row[date].to_i,
+        deaths: $strict ? death_counts&.fetch(dt) : death_counts&.fetch(dt, 0)
     end
   end
 end

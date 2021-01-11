@@ -8,6 +8,7 @@ cd $datadir
 curl -LO https://github.com/nytimes/covid-19-data/raw/master/us-counties.csv
 
 curl -LO https://github.com/CSSEGISandData/COVID-19/raw/master/csse_covid_19_data/csse_covid_19_time_series/time_series_covid19_confirmed_global.csv
+curl -LO https://github.com/CSSEGISandData/COVID-19/raw/master/csse_covid_19_data/csse_covid_19_time_series/time_series_covid19_deaths_global.csv
 
 test -f pop_est_2019.csv ||
   curl -LO https://github.com/nytimes/covid-19-data/raw/63d02b9d1073eff62827daf155a4fe1ef4ab7188/pop_est_2019.csv
