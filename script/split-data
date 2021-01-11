@@ -76,7 +76,7 @@ class Outputs
         name: country.name,
         fips: country.fips,
         population: @pop.get(country),
-        cases: _counts(country.deaths_by_date)
+        deaths: _counts(country.deaths_by_date)
 
       next if country.children.keys == [WHOLE_COUNTRY]
 
@@ -85,14 +85,14 @@ class Outputs
           name: "#{province.name}, #{country.name}",
           fips: province.fips,
           population: @pop.get(country, province),
-          cases: _counts(province.deaths_by_date)
+          deaths: _counts(province.deaths_by_date)
 
         province.children.each do |_, county|
           _write_json ["deaths", country.name, province.name, county.name],
             name: "#{county.name}, #{province.name}, #{country.name}",
             fips: county.fips,
             population: @pop.get(country, province, county),
-            cases: _counts(county.deaths_by_date)
+            deaths: _counts(county.deaths_by_date)
         end
       end
     end
@@ -147,13 +147,15 @@ class Populations
   ]
 
   def get_us(state, county)
-    @uspop = 0
-    @fipspops ||= _read_csv("pop_est_2019.csv").each_with_object(Hash.new(0)) { |row, res|
-      pop = row["population"].to_i
-      res[row["fips"]] = pop
-      res[row["fips"][0,2]] += pop
-      @uspop += pop
-    }
+    if @uspop.nil? || @fipspops.nil?
+      @uspop = 0
+      @fipspops = _read_csv("pop_est_2019.csv").each_with_object(Hash.new(0)) { |row, res|
+        pop = row["population"].to_i
+        res[row["fips"]] = pop
+        res[row["fips"][0,2]] += pop
+        @uspop += pop
+      }
+    end
     if county
       if county.name == "Unknown"
         0
